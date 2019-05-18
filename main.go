@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -51,10 +52,18 @@ func main() {
 
 	subRouter.HandleFunc("/", ListUsers).Methods(http.MethodGet)
 	subRouter.HandleFunc("/", CreateUser).Methods(http.MethodPost)
+	srv := &http.Server{
+		Addr:    "0.0.0.0:8080",
+		Handler: router,
+	}
+	if err := srv.ListenAndServe(); err != nil {
+		log.Println(err)
+	}
+
 }
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
-
+	w.Write([]byte("HelloWorld"))
 }
 
 func CreateUser(w http.ResponseWriter, r *http.Request) {
