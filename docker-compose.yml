@@ -1,9 +1,21 @@
 version: '3'
 services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: postgres-dev
+      POSTGRES_PASSWORD: password
+    ports:
+      - "8090:5432"
   app:
     build: .
-    command: ["go", "run", "main.go"]
+    command: ["./wait-for-it.sh", "db:5432", "--", "go", "run", "main.go"]
     volumes:
       - .:/go/src/app
     ports:
       - "8080:8080"
+    depends_on:
+      - db
+    links:
+      - db
