@@ -1,5 +1,6 @@
 package main
 
+// TODO create different packages
 import (
 	"context"
 	"database/sql"
@@ -60,6 +61,7 @@ func main() {
 	}
 
 	// initializing routes
+	// TODO add vendoring
 	router := mux.NewRouter()
 	router.HandleFunc("/", checkLive).Methods(http.MethodGet)
 	usersRouter := router.PathPrefix("/users").Subrouter()
@@ -68,7 +70,7 @@ func main() {
 	usersRouter.HandleFunc("/{id}", UpdateUser).Methods(http.MethodPut)
 	usersRouter.HandleFunc("/{id}", DeleteUser).Methods(http.MethodDelete)
 	usersRouter.HandleFunc("/{id}", GetUser).Methods(http.MethodGet)
-
+	// TODO add transactions and books
 	// http server
 	srv := &http.Server{
 		Addr:    "0.0.0.0:8080",
