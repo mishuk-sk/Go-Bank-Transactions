@@ -1,5 +1,12 @@
 version: '3'
 services:
+  admin:
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: mail
+      PGADMIN_DEFAULT_PASSWORD: 2312
+    ports:
+      - "80:80"
   db:
     image: postgres
     environment:
