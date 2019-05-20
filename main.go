@@ -32,6 +32,12 @@ type User struct {
 	Email      interface{} `json:"email"`
 }
 
+type Account struct {
+	ID      uuid.UUID `json:"id"`
+	UserId  uuid.UUID `json:"user_id"`
+	balance float64   `json:"balance"`
+}
+
 var db *sql.DB
 
 func main() {
@@ -70,7 +76,9 @@ func main() {
 	usersRouter.HandleFunc("/{id}", UpdateUser).Methods(http.MethodPut)
 	usersRouter.HandleFunc("/{id}", DeleteUser).Methods(http.MethodDelete)
 	usersRouter.HandleFunc("/{id}", GetUser).Methods(http.MethodGet)
-	// TODO add transactions and books
+	usersRouter.HandleFunc("/{id}/accounts", GetUserAccounts).Methods(http.MethodGet)
+	//usersRouter.HandleFunc("/{id}/accounts", AddAccount).Methods(http.MethodPost)
+	// TODO add transactions and personal accounts
 	// http server
 	srv := &http.Server{
 		Addr:    "0.0.0.0:8080",
@@ -95,6 +103,53 @@ func main() {
 
 func checkLive(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("LIVE!!!"))
+}
+
+func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(mux.Vars(r)["id"])
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err.Error())
+		log.Println(err)
+		return
+	}
+	exists := false
+	db.QueryRow("SELECT EXISTS(SELECT 1 FROM users WHERE id=$1", id).Scan(&exists)
+	if !exists {
+		w.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(w, "%s\n", "User: $1 not found", id)
+		log.Printf("%s\n", "User: $1 not found", id)
+		return
+	}
+
+	rows, err := db.Query("SELECT * FROM personal_accounts WHERE userId=$1", id)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		log.Println(err)
+		return
+	}
+	defer rows.Close()
+	var accounts []Account
+	for rows.Next() {
+		account := Account{}
+		if err := rows.Scan(&account.ID, &account.balance, &account.UserId); err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprint(w, err)
+			log.Println(err)
+			return
+		}
+		accounts = append(accounts, account)
+	}
+	marshaledAccounts, err := json.Marshal(accounts)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		fmt.Fprint(w, err)
+		log.Println(err)
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+	w.Write(marshaledAccounts)
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
