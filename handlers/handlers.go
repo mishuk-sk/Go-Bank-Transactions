@@ -21,9 +21,9 @@ type User struct {
 	Email      interface{} `json:"email" db:"email"`
 }
 type Account struct {
-	ID      uuid.UUID `json:"id"`
-	UserId  uuid.UUID `json:"user_id"`
-	balance float64   `json:"balance"`
+	ID      uuid.UUID `json:"id" db:"id"`
+	UserId  uuid.UUID `json:"user_id" db:"user_id"`
+	Balance float64   `json:"balance" db:"balance"`
 }
 
 func Init(router *mux.Router, database *sqlx.DB) {
@@ -78,6 +78,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
+		return
 	}
 	//TODO deal with id backup
 	id := user.ID
@@ -99,6 +100,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
+		return
 	}
 	if _, err := db.Exec("DELETE FROM users WHERE id=$1", user.ID); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
@@ -113,6 +115,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
+		return
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
@@ -126,7 +129,7 @@ func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusNotFound)
 		return
 	}
-	if err := db.Select(&accounts, "SELECT * FROM personal_accounts WHERE userId=$1", user.ID); err != nil {
+	if err := db.Select(&accounts, "SELECT user_id, id, balance::money::numeric::float8 FROM personal_accounts WHERE user_id=$1", user.ID); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
@@ -145,7 +148,7 @@ func AddAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&account)
 	account.ID = uuid.New()
 	account.UserId = user.ID
-	if _, err := db.Exec("INSERT INTO accounts(id, balance, userId) VALUES ($1, $2, $3)", account.ID, account.balance, account.UserId); err != nil {
+	if _, err := db.Exec("INSERT INTO personal_accounts(id, balance, user_id) VALUES ($1, $2, $3)", account.ID, account.Balance, account.UserId); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
@@ -160,7 +163,9 @@ func fetchUser(id string) (User, error) {
 		return User{}, fmt.Errorf("%s", err.Error())
 	}
 	user := User{}
-	if err := db.Get(&user, "SELECT 1 FROM users WHERE id=$1", ID); err != nil {
+	//row := db.QueryRowx("SELECT * FROM users WHERE id=$1", ID)
+	if err := db.Get(&user, "SELECT * FROM users WHERE id=$1", ID); err != nil {
+		log.Println("WRONG")
 		return User{}, fmt.Errorf("%s", err.Error())
 	}
 	return user, nil
