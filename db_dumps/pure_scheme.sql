@@ -156,17 +156,17 @@ SET default_tablespace = '';
 SET default_with_oids = false;
 
 --
--- Name: bankBooks; Type: TABLE; Schema: public; Owner: postgres-dev
+-- Name: personal_accounts; Type: TABLE; Schema: public; Owner: postgres-dev
 --
 
-CREATE TABLE public."bankBooks" (
+CREATE TABLE public.personal_accounts (
     id uuid NOT NULL,
     balance money NOT NULL,
     "userId" uuid NOT NULL
 );
 
 
-ALTER TABLE public."bankBooks" OWNER TO "postgres-dev";
+ALTER TABLE public.personal_accounts OWNER TO "postgres-dev";
 
 --
 -- Name: transactions; Type: TABLE; Schema: public; Owner: postgres-dev
@@ -190,20 +190,24 @@ ALTER TABLE public.transactions OWNER TO "postgres-dev";
 CREATE TABLE public.users (
     first_name text NOT NULL,
     id uuid NOT NULL,
-    phone character varying(13)[],
+    phone text,
     second_name text NOT NULL,
-    email character varying(40)[],
-    CONSTRAINT "OneIsNotNULL" CHECK (((phone IS NOT NULL) OR (email IS NOT NULL)))
+    email text,
+    CONSTRAINT "OneIsNotNULL" CHECK (((phone IS NOT NULL) OR (email IS NOT NULL))),
+    CONSTRAINT users_email_check CHECK ((email <> ''::text)),
+    CONSTRAINT users_first_name_check CHECK ((first_name <> ''::text)),
+    CONSTRAINT users_phone_check CHECK ((phone <> ''::text)),
+    CONSTRAINT users_second_name_check CHECK ((second_name <> ''::text))
 );
 
 
 ALTER TABLE public.users OWNER TO "postgres-dev";
 
 --
--- Data for Name: bankBooks; Type: TABLE DATA; Schema: public; Owner: postgres-dev
+-- Data for Name: personal_accounts; Type: TABLE DATA; Schema: public; Owner: postgres-dev
 --
 
-COPY public."bankBooks" (id, balance, "userId") FROM stdin;
+COPY public.personal_accounts (id, balance, "userId") FROM stdin;
 \.
 
 
@@ -224,10 +228,10 @@ COPY public.users (first_name, id, phone, second_name, email) FROM stdin;
 
 
 --
--- Name: bankBooks none; Type: CONSTRAINT; Schema: public; Owner: postgres-dev
+-- Name: personal_accounts none; Type: CONSTRAINT; Schema: public; Owner: postgres-dev
 --
 
-ALTER TABLE ONLY public."bankBooks"
+ALTER TABLE ONLY public.personal_accounts
     ADD CONSTRAINT "none" PRIMARY KEY (id);
 
 
@@ -248,10 +252,10 @@ ALTER TABLE ONLY public.users
 
 
 --
--- Name: bankBooks bankBooks_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres-dev
+-- Name: personal_accounts bankBooks_userId_fkey; Type: FK CONSTRAINT; Schema: public; Owner: postgres-dev
 --
 
-ALTER TABLE ONLY public."bankBooks"
+ALTER TABLE ONLY public.personal_accounts
     ADD CONSTRAINT "bankBooks_userId_fkey" FOREIGN KEY ("userId") REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
@@ -260,7 +264,7 @@ ALTER TABLE ONLY public."bankBooks"
 --
 
 ALTER TABLE ONLY public.transactions
-    ADD CONSTRAINT "transactions_fromBook_fkey" FOREIGN KEY ("fromBook") REFERENCES public."bankBooks"(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+    ADD CONSTRAINT "transactions_fromBook_fkey" FOREIGN KEY ("fromBook") REFERENCES public.personal_accounts(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -268,7 +272,7 @@ ALTER TABLE ONLY public.transactions
 --
 
 ALTER TABLE ONLY public.transactions
-    ADD CONSTRAINT "transactions_toBook_fkey" FOREIGN KEY ("toBook") REFERENCES public."bankBooks"(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+    ADD CONSTRAINT "transactions_toBook_fkey" FOREIGN KEY ("toBook") REFERENCES public.personal_accounts(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --

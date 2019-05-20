@@ -15,6 +15,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	_ "github.com/lib/pq"
+	"github.com/mishuk-sk/Go-Bank-Transactions/handlers"
 )
 
 type configuration struct {
@@ -70,13 +71,15 @@ func main() {
 	// TODO add vendoring
 	router := mux.NewRouter()
 	router.HandleFunc("/", checkLive).Methods(http.MethodGet)
-	usersRouter := router.PathPrefix("/users").Subrouter()
+	handlers.Init(router, db)
+	/*usersRouter := router.PathPrefix("/users").Subrouter()
 	usersRouter.HandleFunc("/", ListUsers).Methods(http.MethodGet)
 	usersRouter.HandleFunc("/", CreateUser).Methods(http.MethodPost)
 	usersRouter.HandleFunc("/{id}", UpdateUser).Methods(http.MethodPut)
 	usersRouter.HandleFunc("/{id}", DeleteUser).Methods(http.MethodDelete)
 	usersRouter.HandleFunc("/{id}", GetUser).Methods(http.MethodGet)
 	usersRouter.HandleFunc("/{id}/accounts", GetUserAccounts).Methods(http.MethodGet)
+	*/
 	//usersRouter.HandleFunc("/{id}/accounts", AddAccount).Methods(http.MethodPost)
 	// TODO add transactions and personal accounts
 	// http server

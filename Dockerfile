@@ -1,8 +1,7 @@
-FROM golang:1.8
+FROM golang:1.9
 
-RUN mkdir -p /go/src/app
-WORKDIR /go/src/app
 
-ADD . /go/src/app
+COPY . /go/src/github.com/mishuk-sk/Go-Bank-Transactions
+WORKDIR /go/src/github.com/mishuk-sk/Go-Bank-Transactions
 
-RUN go get -v
+RUN go get -v .
