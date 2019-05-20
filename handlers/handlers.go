@@ -9,19 +9,20 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 )
 
-var db *sql.DB
+var db *sqlx.DB
 
 type User struct {
-	ID         uuid.UUID   `json:"id"`
-	FirstName  string      `json:"first_name"`
-	SecondName string      `json:"second_name"`
-	Phone      interface{} `json:"phone"`
-	Email      interface{} `json:"email"`
+	ID         uuid.UUID   `json:"id" db:"id"`
+	FirstName  string      `json:"first_name" db:"first_name"`
+	SecondName string      `json:"second_name" db:"second_name"`
+	Phone      interface{} `json:"phone" db:"phone"`
+	Email      interface{} `json:"email" db:"email"`
 }
 
-func Init(router *mux.Router, database *sql.DB) {
+func Init(router *mux.Router, database *sqlx.DB) {
 	db = database
 
 	usersRouter := router.PathPrefix("/users").Subrouter()
@@ -41,23 +42,13 @@ func raiseErr(err error, w http.ResponseWriter, status int) {
 }
 
 func ListUsers(w http.ResponseWriter, r *http.Request) {
-	rows, err := db.Query("SELECT * FROM users")
+	var users []User
+	err := db.Select(&users, "SELECT * FROM users")
 	if err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
-	defer rows.Close()
 	w.Header().Set("Content-Type", "application/json")
-	var users []User
-	for rows.Next() {
-		user := User{}
-		if err := rows.Scan(&user.ID, &user.FirstName, &user.SecondName, &user.Phone, &user.Email); err != nil {
-			raiseErr(err, w, http.StatusInternalServerError)
-			return
-		}
-		users = append(users, user)
-		json.NewEncoder(w).Encode(user)
-	}
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(users)
 }

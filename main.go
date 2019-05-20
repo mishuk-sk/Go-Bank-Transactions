@@ -3,7 +3,6 @@ package main
 // TODO create different packages
 import (
 	"context"
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/mishuk-sk/Go-Bank-Transactions/handlers"
 )
@@ -39,7 +39,7 @@ type Account struct {
 	balance float64   `json:"balance"`
 }
 
-var db *sql.DB
+var db *sqlx.DB
 
 func main() {
 	var wait time.Duration
@@ -55,7 +55,7 @@ func main() {
 	}
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.DbHost, config.DbPort, config.DbUser, config.DbPassword, config.DbName)
-	db, err = sql.Open("postgres", psqlInfo)
+	db, err = sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}
@@ -108,7 +108,7 @@ func checkLive(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("LIVE!!!"))
 }
 
-func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
+/*func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -290,3 +290,4 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprintf(w, "%s %v\n", "Inserted", user)
 }
+*/
