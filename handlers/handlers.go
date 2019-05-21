@@ -20,10 +20,10 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	usersRouter.HandleFunc("/{user_id}/", DeleteUser).Methods(http.MethodDelete)
 	usersRouter.HandleFunc("/{user_id}/", GetUser).Methods(http.MethodGet)
 
-	accountsRouter := router.PathPrefix("/accounts").Subrouter()
+	accountsRouter := usersRouter.PathPrefix("/{user_id}/accounts").Subrouter()
 	accountsRouter.Use(checkUserMiddleware)
-	accountsRouter.HandleFunc("/{user_id}/", GetUserAccounts).Methods(http.MethodGet)
-	usersRouter.HandleFunc("/{user_id}/accounts/", AddAccount).Methods(http.MethodPost)
+	accountsRouter.HandleFunc("/", GetUserAccounts).Methods(http.MethodGet)
+	accountsRouter.HandleFunc("/", AddAccount).Methods(http.MethodPost)
 	accountsRouter.HandleFunc("{account_id}/", GetAccount).Methods(http.MethodGet)
 	accountsRouter.HandleFunc("{account_id}/", DeleteAccount).Methods(http.MethodDelete)
 	accountsRouter.HandleFunc("{account_id}/", UpdateAccount).Methods(http.MethodPut)
@@ -45,6 +45,6 @@ func checkUserMiddleware(next http.Handler) http.Handler {
 
 func raiseErr(err error, w http.ResponseWriter, status int) {
 	w.WriteHeader(status)
-	fmt.Fprintf(w, "%s %s", "Internal server error", err.Error())
+	fmt.Fprintf(w, "%s", err.Error())
 	log.Println(err)
 }
