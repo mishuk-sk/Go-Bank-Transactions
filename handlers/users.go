@@ -50,7 +50,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateUser(w http.ResponseWriter, r *http.Request) {
-	user, err := fetchUser(mux.Vars(r)["id"])
+	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
@@ -71,7 +71,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteUser(w http.ResponseWriter, r *http.Request) {
-	user, err := fetchUser(mux.Vars(r)["id"])
+	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
@@ -86,7 +86,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	user, err := fetchUser(mux.Vars(r)["id"])
+	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
@@ -98,7 +98,7 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 
 func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 	var accounts []Account
-	user, err := fetchUser(mux.Vars(r)["id"])
+	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
@@ -113,7 +113,7 @@ func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddAccount(w http.ResponseWriter, r *http.Request) {
-	user, err := fetchUser(mux.Vars(r)["id"])
+	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return

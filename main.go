@@ -25,8 +25,6 @@ type configuration struct {
 	DbPassword string `json:"db_password"`
 }
 
-var db *sqlx.DB
-
 func main() {
 	var wait time.Duration
 	config := configuration{}
@@ -41,7 +39,7 @@ func main() {
 	}
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.DbHost, config.DbPort, config.DbUser, config.DbPassword, config.DbName)
-	db, err = sqlx.Open("postgres", psqlInfo)
+	db, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
 		panic(err)
 	}

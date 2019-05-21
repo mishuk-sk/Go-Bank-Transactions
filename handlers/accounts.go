@@ -17,7 +17,7 @@ type Account struct {
 }
 
 func GetAccount(w http.ResponseWriter, r *http.Request) {
-	account, err := fetchAccount(mux.Vars(r)["id"])
+	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
@@ -28,7 +28,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func UpdateAccount(w http.ResponseWriter, r *http.Request) {
-	account, err := fetchAccount(mux.Vars(r)["id"])
+	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
