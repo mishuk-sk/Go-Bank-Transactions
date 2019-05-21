@@ -48,8 +48,8 @@ ALTER TABLE public.personal_accounts OWNER TO "postgres-dev";
 
 CREATE TABLE public.transactions (
     id uuid NOT NULL,
-    "fromBook" uuid NOT NULL,
-    "toBook" uuid NOT NULL,
+    from_account uuid NOT NULL,
+    to_account uuid NOT NULL,
     date date NOT NULL,
     money money NOT NULL
 );
@@ -94,7 +94,7 @@ a6d3e736-bdac-45a3-a0b5-56e1dee1b6d3	$12,345.00	86ebaad9-c2ff-4740-a53c-91736146
 -- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: postgres-dev
 --
 
-COPY public.transactions (id, "fromBook", "toBook", date, money) FROM stdin;
+COPY public.transactions (id, from_account, to_account, date, money) FROM stdin;
 \.
 
 
@@ -154,7 +154,7 @@ ALTER TABLE ONLY public.personal_accounts
 --
 
 ALTER TABLE ONLY public.transactions
-    ADD CONSTRAINT "transactions_fromBook_fkey" FOREIGN KEY ("fromBook") REFERENCES public.personal_accounts(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+    ADD CONSTRAINT "transactions_fromBook_fkey" FOREIGN KEY (from_account) REFERENCES public.personal_accounts(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --
@@ -162,7 +162,7 @@ ALTER TABLE ONLY public.transactions
 --
 
 ALTER TABLE ONLY public.transactions
-    ADD CONSTRAINT "transactions_toBook_fkey" FOREIGN KEY ("toBook") REFERENCES public.personal_accounts(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+    ADD CONSTRAINT "transactions_toBook_fkey" FOREIGN KEY (to_account) REFERENCES public.personal_accounts(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
 
 
 --
