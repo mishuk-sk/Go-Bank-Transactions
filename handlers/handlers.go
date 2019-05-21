@@ -28,7 +28,8 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	accountsRouter.HandleFunc("{account_id}/", DeleteAccount).Methods(http.MethodDelete)
 	accountsRouter.HandleFunc("{account_id}/", UpdateAccount).Methods(http.MethodPut)
 
-	transactionsRouter := usersRouter.PathPrefix("/{userId}").Subrouter()
+	transactionsRouter := accountsRouter.PathPrefix("/transactions").Subrouter()
+	transactionsRouter.Use(checkAccountMiddleware)
 	transactionsRouter.HandleFunc("/", GetUserTransactions).Methods(http.MethodGet)
 
 }
@@ -37,6 +38,16 @@ func checkUserMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, err := fetchUser(mux.Vars(r)["user_id"]); err != nil {
 			raiseErr(fmt.Errorf("%s; Internal error - %s", "User not found", err.Error()), w, http.StatusNotFound)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func checkAccountMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if _, err := fetchAccount(mux.Vars(r)["account_id"]); err != nil {
+			raiseErr(fmt.Errorf("%s; Internal error - %s", "Account not found", err.Error()), w, http.StatusNotFound)
 			return
 		}
 		next.ServeHTTP(w, r)
