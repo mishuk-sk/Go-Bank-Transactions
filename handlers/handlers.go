@@ -22,6 +22,9 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	usersRouter.HandleFunc("/{id}/accounts/", GetUserAccounts).Methods(http.MethodGet)
 	usersRouter.HandleFunc("/{id}/accounts/", AddAccount).Methods(http.MethodPost)
 
+	transactionsRouter := usersRouter.PathPrefix("/{userId}").Subrouter()
+	transactionsRouter.HandleFunc("/", GetUserTransactions).Methods(http.MethodGet)
+
 	accountsRouter := router.PathPrefix("/accounts/{id}").Subrouter()
 	accountsRouter.HandleFunc("/", GetAccount).Methods(http.MethodGet)
 	accountsRouter.HandleFunc("/", DeleteAccount).Methods(http.MethodDelete)

@@ -103,7 +103,7 @@ func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusNotFound)
 		return
 	}
-	if err := db.Select(&accounts, "SELECT user_id, id, balance::money::numeric::float8 FROM personal_accounts WHERE user_id=$1", user.ID); err != nil {
+	if err := db.Select(&accounts, "SELECT user_id, id, name, balance::money::numeric::float8 FROM personal_accounts WHERE user_id=$1", user.ID); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
@@ -122,7 +122,7 @@ func AddAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewDecoder(r.Body).Decode(&account)
 	account.ID = uuid.New()
 	account.UserId = user.ID
-	if _, err := db.Exec("INSERT INTO personal_accounts(id, balance, user_id) VALUES ($1, $2, $3)", account.ID, account.Balance, account.UserId); err != nil {
+	if _, err := db.Exec("INSERT INTO personal_accounts(id, balance, user_id, name) VALUES ($1, $2, $3, $4)", account.ID, account.Balance, account.UserId, account.Name); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
