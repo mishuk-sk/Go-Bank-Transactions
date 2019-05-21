@@ -39,12 +39,6 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	usersRouter.HandleFunc("/{id}/accounts", AddAccount).Methods(http.MethodPost)
 }
 
-func raiseErr(err error, w http.ResponseWriter, status int) {
-	w.WriteHeader(status)
-	fmt.Fprintf(w, "%s %s", "Internal server error", err.Error())
-	log.Println(err)
-}
-
 func ListUsers(w http.ResponseWriter, r *http.Request) {
 	var users []User
 	err := db.Select(&users, "SELECT * FROM users")
@@ -157,13 +151,18 @@ func AddAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(account)
 }
 
+func raiseErr(err error, w http.ResponseWriter, status int) {
+	w.WriteHeader(status)
+	fmt.Fprintf(w, "%s %s", "Internal server error", err.Error())
+	log.Println(err)
+}
+
 func fetchUser(id string) (User, error) {
 	ID, err := uuid.Parse(id)
 	if err != nil {
 		return User{}, fmt.Errorf("%s", err.Error())
 	}
 	user := User{}
-	//row := db.QueryRowx("SELECT * FROM users WHERE id=$1", ID)
 	if err := db.Get(&user, "SELECT * FROM users WHERE id=$1", ID); err != nil {
 		log.Println("WRONG")
 		return User{}, fmt.Errorf("%s", err.Error())
