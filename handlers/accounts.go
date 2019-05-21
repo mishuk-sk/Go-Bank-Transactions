@@ -41,12 +41,12 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
-	if _, err := db.Exec("UPDATE personal_accounts SET balance = $1 name = $2 WHERE id=$2", reqAccount.Balance, reqAccount.Name, account.ID); err != nil {
+	account.Balance = reqAccount.Balance
+	account.Name = reqAccount.Name
+	if err := updateAccount(account); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
-	account.Balance = reqAccount.Balance
-	account.Name = reqAccount.Name
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(account)
@@ -111,4 +111,9 @@ func fetchAccount(id string) (Account, error) {
 		return Account{}, fmt.Errorf("%s", err.Error())
 	}
 	return account, nil
+}
+
+func updateAccount(data Account) error {
+	_, err := db.Exec("UPDATE personal_accounts SET balance = $1 name = $2 WHERE id=$2", data.Balance, data.Name, data.ID)
+	return err
 }

@@ -7,6 +7,7 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 var db *sqlx.DB
@@ -28,9 +29,12 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	accountsRouter.HandleFunc("{account_id}/", DeleteAccount).Methods(http.MethodDelete)
 	accountsRouter.HandleFunc("{account_id}/", UpdateAccount).Methods(http.MethodPut)
 
-	transactionsRouter := accountsRouter.PathPrefix("/transactions").Subrouter()
+	transactionsRouter := accountsRouter.PathPrefix("/{account_id}/transactions").Subrouter()
 	transactionsRouter.Use(checkAccountMiddleware)
-	transactionsRouter.HandleFunc("/", GetUserTransactions).Methods(http.MethodGet)
+	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
+	transactionsRouter.HandleFunc("/", AddTransaction).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/enrich/", EnrichAccount).Methods(http.MethodPut)
+	//transactionsRouter.HandleFunc("/debit/").Methods(http.MethodPut)
 
 }
 
