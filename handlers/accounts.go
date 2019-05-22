@@ -11,7 +11,7 @@ import (
 
 type Account struct {
 	ID      uuid.UUID   `json:"id" db:"id"`
-	UserId  uuid.UUID   `json:"user_id" db:"user_id"`
+	UserID  uuid.UUID   `json:"user_id" db:"user_id"`
 	Name    interface{} `json:"name" db:"name"`
 	Balance float64     `json:"balance" db:"balance"`
 }
@@ -91,8 +91,8 @@ func AddAccount(w http.ResponseWriter, r *http.Request) {
 	account := Account{}
 	json.NewDecoder(r.Body).Decode(&account)
 	account.ID = uuid.New()
-	account.UserId = user.ID
-	if _, err := db.Exec("INSERT INTO personal_accounts(id, balance, user_id, name) VALUES ($1, $2, $3, $4)", account.ID, account.Balance, account.UserId, account.Name); err != nil {
+	account.UserID = user.ID
+	if _, err := db.Exec("INSERT INTO personal_accounts(id, balance, user_id, name) VALUES ($1, $2, $3, $4)", account.ID, account.Balance, account.UserID, account.Name); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}

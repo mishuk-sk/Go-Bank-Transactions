@@ -41,7 +41,7 @@ func GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddTransaction(w http.ResponseWriter, r *http.Request) {
-	from_account, err := fetchAccount(mux.Vars(r)["account_id"])
+	fromAccount, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
@@ -51,7 +51,7 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	if from_account.Balance < reqTransaction.Money {
+	if fromAccount.Balance < reqTransaction.Money {
 		raiseErr(fmt.Errorf("%s", "Not enough money on account"), w, http.StatusBadRequest)
 		return
 	}
@@ -59,13 +59,13 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s", "There is no account exists, that can accept this transaction"), w, http.StatusBadRequest)
 		return
 	}
-	transaction := Transaction{uuid.New(), time.Now(), from_account.ID, reqTransaction}
+	transaction := Transaction{uuid.New(), time.Now(), fromAccount.ID, reqTransaction}
 	tx, err := db.Beginx()
 	if err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
-	tx.Exec("UPDATE personal_accounts SET balance = balance - $1 WHERE id=$2", reqTransaction.Money, from_account.ID)
+	tx.Exec("UPDATE personal_accounts SET balance = balance - $1 WHERE id=$2", reqTransaction.Money, fromAccount.ID)
 	tx.Exec("UPDATE personal_accounts SET balance = balance + $1 WHERE id=$2", reqTransaction.Money, reqTransaction.ToAccount)
 	tx.NamedExec("INSERT INTO transactions(id, date, from_account, to_account, money) VALUES(:id, :date, :from_account, :to_account, :money)", transaction)
 	if err := tx.Commit(); err != nil {
@@ -83,12 +83,12 @@ func EnrichAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	accountId, err := uuid.Parse(mux.Vars(r)["account_id"])
+	accountID, err := uuid.Parse(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	req.ToAccount = accountId
+	req.ToAccount = accountID
 	transaction := Transaction{uuid.New(), time.Now(), nil, req}
 	tx, err := db.Beginx()
 	if err != nil {
@@ -112,22 +112,22 @@ func DebitAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	from_account, err := fetchAccount(mux.Vars(r)["account_id"])
+	fromAccount, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	if from_account.Balance < req.Money {
+	if fromAccount.Balance < req.Money {
 		raiseErr(fmt.Errorf("%s", "Not enough money on account"), w, http.StatusBadRequest)
 		return
 	}
-	transaction := Transaction{uuid.New(), time.Now(), from_account.ID, req}
+	transaction := Transaction{uuid.New(), time.Now(), fromAccount.ID, req}
 	tx, err := db.Beginx()
 	if err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
-	tx.Exec("UPDATE personal_accounts SET balance = balance - $1 WHERE id=$2", req.Money, from_account.ID)
+	tx.Exec("UPDATE personal_accounts SET balance = balance - $1 WHERE id=$2", req.Money, fromAccount.ID)
 	tx.NamedExec("INSERT INTO transactions(id, date, from_account, to_account, money) VALUES(:id, :date, :from_account, :to_account, :money)", transaction)
 	if err := tx.Commit(); err != nil {
 		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't create transaction", err.Error()), w, http.StatusInternalServerError)
