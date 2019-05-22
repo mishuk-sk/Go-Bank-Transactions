@@ -34,7 +34,7 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
 	transactionsRouter.HandleFunc("/", AddTransaction).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/enrich/", EnrichAccount).Methods(http.MethodPut)
-	//transactionsRouter.HandleFunc("/debit/").Methods(http.MethodPut)
+	//transactionsRouter.HandleFunc("/debit/", DebitAccount).Methods(http.MethodPut)
 
 }
 
