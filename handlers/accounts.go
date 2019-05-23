@@ -64,16 +64,11 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = tx.Exec("DELETE FROM transactions WHERE (from_account=$1 AND to_account=NULL) OR (from_account=NULL AND to_account=$1)", account.ID)
-	if err != nil {
-		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't delete account", err.Error()), w, http.StatusInternalServerError)
-	}
+	tx.Exec("DELETE FROM transactions WHERE (from_account=$1 AND to_account=NULL) OR (from_account=NULL AND to_account=$1)", account.ID)
 	tx.Exec("UPDATE transactions SET from_account=NULL WHERE from_account=$1", account.ID)
 	tx.Exec("UPDATE transactions SET to_account=NULL WHERE to_account=$1", account.ID)
 	tx.Exec("DELETE FROM personal_accounts WHERE id=$1", account.ID)
-	if err != nil {
-		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can'tt", err.Error()), w, http.StatusInternalServerError)
-	}
+
 	if err := tx.Commit(); err != nil {
 		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't delete account", err.Error()), w, http.StatusInternalServerError)
 		return
