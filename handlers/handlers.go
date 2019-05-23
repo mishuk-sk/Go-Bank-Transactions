@@ -35,7 +35,7 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	transactionsRouter.HandleFunc("/", AddTransaction).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/enrich/", EnrichAccount).Methods(http.MethodPut)
 	transactionsRouter.HandleFunc("/debit/", DebitAccount).Methods(http.MethodPut)
-
+	transactionsRouter.HandleFunc("/{transaction_id}/", DiscardTransaction).Methods(http.MethodDelete)
 }
 
 func checkUserMiddleware(next http.Handler) http.Handler {

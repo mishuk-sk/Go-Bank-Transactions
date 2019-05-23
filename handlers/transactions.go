@@ -14,7 +14,7 @@ import (
 
 type Transaction struct {
 	ID          uuid.UUID   `json:"id" db:"id"`
-	Date        time.Time    `json:"date" db:"date"`
+	Date        time.Time   `json:"date" db:"date"`
 	FromAccount interface{} `json:"from_account" db:"from_account"`
 	RequestTransaction
 }
@@ -150,6 +150,43 @@ func DebitAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(transaction)
 }
 
+func DiscardTransaction(w http.ResponseWriter, r *http.Request) {
+	var transaction struct {
+		ID          uuid.UUID `json:"id" db:"id"`
+		Date        time.Time `json:"date" db:"date"`
+		FromAccount uuid.UUID `json:"from_account" db:"from_account"`
+		ToAccount   uuid.UUID `json:"to_account" db:"to_account"`
+		Money       float64   `json:"money" db:"money"`
+	}
+	id, err := uuid.Parse(mux.Vars(r)["transaction_id"])
+	if err != nil {
+		raiseErr(fmt.Errorf("%s: %s", "Wrong transaction id", err.Error()), w, http.StatusBadRequest)
+		return
+	}
+	if err := db.Get(&transaction, "SELECT id, date, from_account, to_account, money::money::numeric::float8 FROM transactions WHERE id=$1", id); err != nil {
+		raiseErr(fmt.Errorf("%s: %s", "No transaction exists with this id", err.Error()), w, http.StatusNotFound)
+		return
+	}
+	tx, err := db.Beginx()
+	if err != nil {
+		raiseErr(err, w, http.StatusInternalServerError)
+		return
+	}
+	if transaction.FromAccount != uuid.Nil {
+		tx.Exec("UPDATE personal_accounts SET balance = balance + $1 WHERE id=$2", transaction.Money, transaction.FromAccount)
+	}
+	if transaction.ToAccount != uuid.Nil {
+		tx.Exec("UPDATE personal_accounts SET balance = balance - $1 WHERE id=$2", transaction.Money, transaction.ToAccount)
+	}
+	tx.Exec("DELETE FROM transactions WHERE id=$1", transaction.ID)
+	if err := tx.Commit(); err != nil {
+		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't delete transaction", err.Error()), w, http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(transaction)
+}
 func checkAccount(id uuid.UUID) bool {
 	var exists bool
 	if err := db.QueryRow("SELECT exists (SELECT id FROM personal_accounts WHERE id=$1)", id).Scan(&exists); err != nil && err != sql.ErrNoRows {
