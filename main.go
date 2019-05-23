@@ -2,9 +2,11 @@ package main
 
 // TODO create different packages
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -54,6 +56,10 @@ func main() {
 	// initializing routes
 	// TODO add vendoring
 	router := mux.NewRouter()
+	if val, ok := os.LookupEnv("VERBOSE"); ok && (val == "true") {
+		router.Use(verboseMiddleware)
+		log.Println("Started in verbose mode")
+	}
 	router.HandleFunc("/", checkLive).Methods(http.MethodGet)
 	handlers.Init(router, db)
 
@@ -81,4 +87,19 @@ func main() {
 
 func checkLive(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("LIVE!!!"))
+}
+
+func verboseMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		url := r.RequestURI
+		method := r.Method
+		body, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Error reading body: %v", err)
+			return
+		}
+		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+		log.Printf("RequestURI: %s\n Method: %s\n Body: %s\n", url, method, body)
+		next.ServeHTTP(w, r)
+	})
 }
