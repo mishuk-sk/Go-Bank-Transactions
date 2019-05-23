@@ -14,7 +14,7 @@ import (
 
 type Transaction struct {
 	ID          uuid.UUID   `json:"id" db:"id"`
-	Date        time.Time   `json:"date" db:"date"`
+	Date        time.Time    `json:"date" db:"date"`
 	FromAccount interface{} `json:"from_account" db:"from_account"`
 	RequestTransaction
 }

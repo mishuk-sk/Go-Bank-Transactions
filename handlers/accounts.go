@@ -52,7 +52,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(account)
 }
 
-func DeleteAccount(w http.ResponseWriter, r *http.Request) {
+/*func DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
@@ -77,7 +77,7 @@ func DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(account)
-}
+}*/
 func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 	var accounts []Account
 	user, err := fetchUser(mux.Vars(r)["user_id"])
