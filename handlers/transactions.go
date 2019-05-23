@@ -30,11 +30,18 @@ func GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	transactions := []Transaction{}
+	var transactions []struct {
+		ID          uuid.UUID `json:"id" db:"id"`
+		Date        time.Time `json:"date" db:"date"`
+		FromAccount uuid.UUID `json:"from_account" db:"from_account"`
+		ToAccount   uuid.UUID `json:"to_account" db:"to_account"`
+		Money       float64   `json:"money" db:"money"`
+	}
 	if err := db.Select(&transactions, "SELECT id, from_account, to_account, date, money::money::numeric::float8 FROM transactions WHERE from_account=$1 OR to_account=$1", id); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(transactions)
@@ -53,6 +60,10 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 	}
 	if fromAccount.Balance < reqTransaction.Money {
 		raiseErr(fmt.Errorf("%s", "Not enough money on account"), w, http.StatusBadRequest)
+		return
+	}
+	if reqTransaction.ToAccount, err = uuid.Parse(reqTransaction.ToAccount.(string)); err != nil {
+		raiseErr(fmt.Errorf("%s%s", "Dst account error: ", err.Error()), w, http.StatusBadRequest)
 		return
 	}
 	if !checkAccount(reqTransaction.ToAccount.(uuid.UUID)) {
@@ -121,6 +132,7 @@ func DebitAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s", "Not enough money on account"), w, http.StatusBadRequest)
 		return
 	}
+	req.ToAccount = nil
 	transaction := Transaction{uuid.New(), time.Now(), fromAccount.ID, req}
 	tx, err := db.Beginx()
 	if err != nil {

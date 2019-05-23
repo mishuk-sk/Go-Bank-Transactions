@@ -53,15 +53,32 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func DeleteAccount(w http.ResponseWriter, r *http.Request) {
-	account, err := fetchAccount(mux.Vars(r)["id"])
+	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
 		return
 	}
-	if _, err := db.Exec("DELETE FROM personal_accounts WHERE id=$1", account.ID); err != nil {
+	tx, err := db.Beginx()
+	if err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
+
+	_, err = tx.Exec("DELETE FROM transactions WHERE (from_account=$1 AND to_account=NULL) OR (from_account=NULL AND to_account=$1)", account.ID)
+	if err != nil {
+		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't delete account", err.Error()), w, http.StatusInternalServerError)
+	}
+	tx.Exec("UPDATE transactions SET from_account=NULL WHERE from_account=$1", account.ID)
+	tx.Exec("UPDATE transactions SET to_account=NULL WHERE to_account=$1", account.ID)
+	tx.Exec("DELETE FROM personal_accounts WHERE id=$1", account.ID)
+	if err != nil {
+		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can'tt", err.Error()), w, http.StatusInternalServerError)
+	}
+	if err := tx.Commit(); err != nil {
+		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't delete account", err.Error()), w, http.StatusInternalServerError)
+		return
+	}
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(account)
