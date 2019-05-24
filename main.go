@@ -1,6 +1,5 @@
 package main
 
-// TODO create different packages
 import (
 	"bytes"
 	"context"
@@ -54,7 +53,7 @@ func main() {
 	}
 
 	// initializing routes
-	// TODO add vendoring
+	// TODO check verbose mode
 	router := mux.NewRouter()
 	if val, ok := os.LookupEnv("VERBOSE"); ok && (val == "true") {
 		router.Use(verboseMiddleware)

@@ -44,16 +44,8 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	moneyOperationsRouter.HandleFunc("/debit/", balanceChange(DebitAccount)).Methods(http.MethodPost)
 }
 
-func loging(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Print(w.Header().Get("Content-Length"))
-		w.Write([]byte("lol"))
-		next.ServeHTTP(w, r)
-	})
-}
-
 // TODO refactor code to reduce request to DB (change calling decorator to work in functions instead, or redesign functions to take db requests as parameters)
-// TODO works incorrect when trying to debit more, than there's on account
+// FIXME works incorrect when trying to debit more, than there's on account
 func balanceChange(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		body, err := ioutil.ReadAll(r.Body)
@@ -86,6 +78,7 @@ func balanceChange(f func(w http.ResponseWriter, r *http.Request)) func(w http.R
 	}
 }
 
+// TODO revbuild notifier (email or phone)
 func notifyUser(user User, notification string) {
 	log.Print(notification)
 }
