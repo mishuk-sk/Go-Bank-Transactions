@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"database/sql"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -22,6 +21,12 @@ type Transaction struct {
 type RequestTransaction struct {
 	ToAccount interface{} `json:"to_account" db:"to_account"`
 	Money     float64     `json:"money" db:"money"`
+}
+
+type Notification struct {
+	Account     Account
+	Transaction Transaction
+	Debit       bool
 }
 
 func GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
@@ -47,12 +52,8 @@ func GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(transactions)
 }
 
-func AddTransaction(w http.ResponseWriter, r *http.Request) {
-	fromAccount, err := fetchAccount(mux.Vars(r)["account_id"])
-	if err != nil {
-		raiseErr(err, w, http.StatusBadRequest)
-		return
-	}
+func AddTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
+	fromAccount, _ := fetchAccount(mux.Vars(r)["account_id"])
 	reqTransaction := RequestTransaction{}
 	if err := json.NewDecoder(r.Body).Decode(&reqTransaction); err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
@@ -62,11 +63,8 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s", "Not enough money on account"), w, http.StatusBadRequest)
 		return
 	}
-	if reqTransaction.ToAccount, err = uuid.Parse(reqTransaction.ToAccount.(string)); err != nil {
-		raiseErr(fmt.Errorf("%s%s", "Dst account error: ", err.Error()), w, http.StatusBadRequest)
-		return
-	}
-	if !checkAccount(reqTransaction.ToAccount.(uuid.UUID)) {
+	toAccount, err := fetchAccount(reqTransaction.ToAccount.(string))
+	if err != nil {
 		raiseErr(fmt.Errorf("%s", "There is no account exists, that can accept this transaction"), w, http.StatusBadRequest)
 		return
 	}
@@ -83,23 +81,28 @@ func AddTransaction(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't create transaction", err.Error()), w, http.StatusInternalServerError)
 		return
 	}
+	// Making balance relevant for both account after transaction
+	fromAccount.Balance -= transaction.Money
+	toAccount.Balance += transaction.Money
+	ch <- Notification{fromAccount, transaction, true}
+	ch <- Notification{toAccount, transaction, false}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(transaction)
 }
 
-func EnrichAccount(w http.ResponseWriter, r *http.Request) {
+func EnrichAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
 	req := RequestTransaction{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	accountID, err := uuid.Parse(mux.Vars(r)["account_id"])
+	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
 		return
 	}
-	req.ToAccount = accountID
+	req.ToAccount = account.ID
 	transaction := Transaction{uuid.New(), time.Now(), nil, req}
 	tx, err := db.Beginx()
 	if err != nil {
@@ -112,12 +115,15 @@ func EnrichAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't create transaction", err.Error()), w, http.StatusInternalServerError)
 		return
 	}
+	// Making balance relevant after transaction
+	account.Balance += transaction.Money
+	ch <- Notification{account, transaction, false}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(transaction)
 }
 
-func DebitAccount(w http.ResponseWriter, r *http.Request) {
+func DebitAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
 	req := RequestTransaction{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
@@ -145,6 +151,9 @@ func DebitAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't create transaction", err.Error()), w, http.StatusInternalServerError)
 		return
 	}
+	// Making balance relevant after transaction
+	fromAccount.Balance -= transaction.Money
+	ch <- Notification{fromAccount, transaction, true}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(transaction)
@@ -187,11 +196,21 @@ func DiscardTransaction(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(transaction)
 }
-func checkAccount(id uuid.UUID) bool {
-	var exists bool
-	if err := db.QueryRow("SELECT exists (SELECT id FROM personal_accounts WHERE id=$1)", id).Scan(&exists); err != nil && err != sql.ErrNoRows {
-		log.Println(err)
-		return false
+
+func notifyUser(not interface{}) {
+	notification := not.(Notification)
+	user, _ := fetchUser(notification.Account.UserID.String())
+	var chargeStr string
+	if notification.Debit {
+		chargeStr = "charged"
+	} else if !notification.Debit {
+		chargeStr = "enriched"
 	}
-	return exists
+	notString := fmt.Sprintf("Dear %s %s, your account %s (id: %v) was %s for %f", user.FirstName, user.SecondName, notification.Account.Name, notification.Account.ID, chargeStr, notification.Transaction.Money)
+	if user.Phone != nil {
+		log.Printf("SMS: %s\n", notString)
+	}
+	if user.Email != nil {
+		log.Printf("Email: %s\n", notString)
+	}
 }

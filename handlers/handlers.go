@@ -1,13 +1,11 @@
 package handlers
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
-	"strings"
+
+	"github.com/mishuk-sk/Go-Bank-Transactions/subhandler"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -39,48 +37,12 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	// TODO add notify on discarding transaction
 	transactionsRouter.HandleFunc("/{transaction_id}/", DiscardTransaction).Methods(http.MethodDelete)
 	moneyOperationsRouter := transactionsRouter.PathPrefix("").Subrouter()
-	moneyOperationsRouter.HandleFunc("/", balanceChange(AddTransaction)).Methods(http.MethodPost)
-	moneyOperationsRouter.HandleFunc("/enrich/", balanceChange(EnrichAccount)).Methods(http.MethodPost)
-	moneyOperationsRouter.HandleFunc("/debit/", balanceChange(DebitAccount)).Methods(http.MethodPost)
-}
-
-// TODO refactor code to reduce request to DB (change calling decorator to work in functions instead, or redesign functions to take db requests as parameters)
-// FIXME works incorrect when trying to debit more, than there's on account
-func balanceChange(f func(w http.ResponseWriter, r *http.Request)) func(w http.ResponseWriter, r *http.Request) {
-	return func(w http.ResponseWriter, r *http.Request) {
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Printf("Error reading body: %v", err)
-			http.Error(w, "can't read body", http.StatusBadRequest)
-			return
-		}
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-		f(w, r)
-		mainUser, _ := fetchUser(mux.Vars(r)["user_id"])
-		mainAccount, _ := fetchAccount(mux.Vars(r)["account_id"])
-		reqTransaction := RequestTransaction{}
-		json.Unmarshal(body, &reqTransaction)
-		log.Print(reqTransaction)
-		switch path := r.URL.Path; true {
-		case strings.HasSuffix(path, "/enrich/"):
-			notifyUser(mainUser, fmt.Sprintf("%s %s. Your account %s(id: %v) was fund with %f", mainUser.FirstName, mainUser.SecondName, mainAccount.Name, mainAccount.ID, reqTransaction.Money))
-			return
-		case strings.HasSuffix(path, "/debit/"):
-			notifyUser(mainUser, fmt.Sprintf("%s %s. Your account %s(id: %v) was debit for %f", mainUser.FirstName, mainUser.SecondName, mainAccount.Name, mainAccount.ID, reqTransaction.Money))
-			return
-		default:
-			notifyUser(mainUser, fmt.Sprintf("%s %s. Your account %s(id: %v) was debit for %f", mainUser.FirstName, mainUser.SecondName, mainAccount.Name, mainAccount.ID, reqTransaction.Money))
-			recAccount, _ := fetchAccount(reqTransaction.ToAccount.(string))
-			recUser, _ := fetchUser(recAccount.UserID.String())
-			notifyUser(recUser, fmt.Sprintf("%s %s. Your account %s(id: %v) was fund with %f", recUser.FirstName, recUser.SecondName, recAccount.Name, recAccount.ID, reqTransaction.Money))
-		}
-
-	}
-}
-
-// TODO revbuild notifier (email or phone)
-func notifyUser(user User, notification string) {
-	log.Print(notification)
+	channel := new(subhandler.WorkersChan)
+	channel.Init()
+	channel.AddListener(notifyUser)
+	moneyOperationsRouter.HandleFunc("/", channel.AddWorker(AddTransaction)).Methods(http.MethodPost)
+	moneyOperationsRouter.HandleFunc("/enrich/", channel.AddWorker(EnrichAccount)).Methods(http.MethodPost)
+	moneyOperationsRouter.HandleFunc("/debit/", channel.AddWorker(DebitAccount)).Methods(http.MethodPost)
 }
 
 func checkUserMiddleware(next http.Handler) http.Handler {
