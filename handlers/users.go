@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -94,16 +93,4 @@ func getUser(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(user)
-}
-
-func fetchUser(id string) (User, error) {
-	ID, err := uuid.Parse(id)
-	if err != nil {
-		return User{}, fmt.Errorf("%s", err.Error())
-	}
-	user := User{}
-	if err := db.Get(&user, "SELECT * FROM users WHERE id=$1", ID); err != nil {
-		return User{}, fmt.Errorf("%s", err.Error())
-	}
-	return user, nil
 }

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -114,18 +113,6 @@ func addAccount(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(account)
-}
-
-func fetchAccount(id string) (Account, error) {
-	ID, err := uuid.Parse(id)
-	if err != nil {
-		return Account{}, fmt.Errorf("%s", err.Error())
-	}
-	account := Account{}
-	if err := db.Get(&account, "SELECT id, name, user_id, balance::money::numeric::float8 FROM personal_accounts WHERE id=$1", ID); err != nil {
-		return Account{}, fmt.Errorf("%s", err.Error())
-	}
-	return account, nil
 }
 
 func updateAcc(data Account) error {

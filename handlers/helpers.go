@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -66,4 +67,28 @@ func notifyUser(not interface{}) {
 	if user.Email != nil {
 		log.Printf("Email: %s\n", notString)
 	}
+}
+
+func fetchUser(id string) (User, error) {
+	ID, err := uuid.Parse(id)
+	if err != nil {
+		return User{}, fmt.Errorf("%s", err.Error())
+	}
+	user := User{}
+	if err := db.Get(&user, "SELECT * FROM users WHERE id=$1", ID); err != nil {
+		return User{}, fmt.Errorf("%s", err.Error())
+	}
+	return user, nil
+}
+
+func fetchAccount(id string) (Account, error) {
+	ID, err := uuid.Parse(id)
+	if err != nil {
+		return Account{}, fmt.Errorf("%s", err.Error())
+	}
+	account := Account{}
+	if err := db.Get(&account, "SELECT id, name, user_id, balance::money::numeric::float8 FROM personal_accounts WHERE id=$1", ID); err != nil {
+		return Account{}, fmt.Errorf("%s", err.Error())
+	}
+	return account, nil
 }

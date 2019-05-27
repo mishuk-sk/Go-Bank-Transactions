@@ -8,7 +8,7 @@ import (
 
 func TestListeners(t *testing.T) {
 	var arr []string
-	workers := WorkersChan{}
+	workers := Observer{}
 	workers.Init()
 	defer workers.Close()
 	str1 := "Hello"
