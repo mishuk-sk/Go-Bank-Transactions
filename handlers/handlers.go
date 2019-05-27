@@ -28,6 +28,9 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	accountsRouter.HandleFunc("/", GetUserAccounts).Methods(http.MethodGet)
 	accountsRouter.HandleFunc("/", AddAccount).Methods(http.MethodPost)
 	accountsRouter.HandleFunc("/{account_id}/", GetAccount).Methods(http.MethodGet)
+	// Delete method for accounts was depreciated because of unclear logic under transactions behavior
+	// after account disappearing
+
 	//accountsRouter.HandleFunc("/{account_id}/", DeleteAccount).Methods(http.MethodDelete)
 	accountsRouter.HandleFunc("/{account_id}/", UpdateAccount).Methods(http.MethodPut)
 
@@ -40,7 +43,6 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	transactionsRouter.HandleFunc("/", channel.AddWorker(AddTransaction)).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/enrich/", channel.AddWorker(EnrichAccount)).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/debit/", channel.AddWorker(DebitAccount)).Methods(http.MethodPost)
-	// TODO add notify on discarding transaction
 	transactionsRouter.HandleFunc("/{transaction_id}/", channel.AddWorker(DiscardTransaction)).Methods(http.MethodDelete)
 }
 
