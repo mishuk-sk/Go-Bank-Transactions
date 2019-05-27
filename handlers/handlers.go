@@ -50,14 +50,14 @@ func Init(database *sqlx.DB) *mux.Router {
 	transactionsRouter.Use(checkAccountMiddleware)
 	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
 	// this part implements way to notify listeners on workers pushing to chan
-	channel := new(workers.WorkersChan)
+	channel := new(workers.Observer)
 	toClose = append(toClose, channel)
 	channel.Init()
 	channel.AddListener(notifyUser)
-	transactionsRouter.HandleFunc("/", channel.CreateHttpWorker(AddTransaction)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/enrich/", channel.CreateHttpWorker(EnrichAccount)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/debit/", channel.CreateHttpWorker(DebitAccount)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/{transaction_id}/", channel.CreateHttpWorker(DiscardTransaction)).Methods(http.MethodDelete)
+	transactionsRouter.HandleFunc("/", channel.CreateHTTPWorker(AddTransaction)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/enrich/", channel.CreateHTTPWorker(EnrichAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/debit/", channel.CreateHTTPWorker(DebitAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/{transaction_id}/", channel.CreateHTTPWorker(DiscardTransaction)).Methods(http.MethodDelete)
 	return router
 }
 

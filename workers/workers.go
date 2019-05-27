@@ -5,32 +5,38 @@ import (
 	"sync"
 )
 
-type WorkersChan struct {
-	source    chan interface{}
+// Observer provides way to attach multiple listeners to single channel, where lots of dispatchers writes
+type Observer struct {
+	source chan interface{}
+	// event listeners
 	listeners []func(interface{})
 	sync.RWMutex
 	quit chan struct{}
 }
 
-func (workCh *WorkersChan) CreateHttpWorker(h func(http.ResponseWriter, *http.Request, chan<- interface{})) func(http.ResponseWriter, *http.Request) {
+//CreateHTTPWorker allows to add new worker with http.HandlerFunc signature
+func (workCh *Observer) CreateHTTPWorker(h func(http.ResponseWriter, *http.Request, chan<- interface{})) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h(w, r, chan<- interface{}(workCh.source))
 	}
 }
 
-func (workCh *WorkersChan) CreateWorker(f func(chan<- interface{}, ...interface{})) func(...interface{}) {
+//CreateWorker allows to create any worker
+func (workCh *Observer) CreateWorker(f func(chan<- interface{}, ...interface{})) func(...interface{}) {
 	return func(v ...interface{}) {
 		f(chan<- interface{}(workCh.source), v...)
 	}
 }
 
-func (workCh *WorkersChan) AddListener(f func(interface{})) {
+//AddListener adds listener to all events in this Observer instance. Listener should accept some parameters and mustn't return anything
+func (workCh *Observer) AddListener(f func(interface{})) {
 	workCh.Lock()
 	workCh.listeners = append(workCh.listeners, f)
 	workCh.Unlock()
 }
 
-func (workCh *WorkersChan) Init() {
+//Init initializes Observer for future work. !!!Observer must be closed by calling Observer.Close() after you're done with it
+func (workCh *Observer) Init() {
 	// FIXME what about channel being too full???
 	workCh.source = make(chan interface{}, 10)
 	workCh.quit = make(chan struct{})
@@ -48,7 +54,8 @@ func (workCh *WorkersChan) Init() {
 	}()
 }
 
-func (workCh *WorkersChan) Close() {
+//Close closes Observer correctly, preventing future resources waste
+func (workCh *Observer) Close() {
 	close(workCh.source)
 	close(workCh.quit)
 }
