@@ -24,7 +24,6 @@ func (workCh *WorkersChan) CreateWorker(f func(chan<- interface{}, ...interface{
 	}
 }
 
-// FIXME multiply listeners!!! https://stackoverflow.com/questions/28527038/go-one-channel-with-multiple-listeners
 func (workCh *WorkersChan) AddListener(f func(interface{})) {
 	workCh.Lock()
 	workCh.listeners = append(workCh.listeners, f)
