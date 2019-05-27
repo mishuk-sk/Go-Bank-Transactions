@@ -1,18 +1,16 @@
 package main
 
 import (
-	"bytes"
+
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"time"
 
-	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 	"github.com/mishuk-sk/Go-Bank-Transactions/handlers"
@@ -27,7 +25,7 @@ type configuration struct {
 }
 
 func main() {
-	var wait time.Duration
+	var wait time.Duration = 1000000000
 	config := configuration{}
 
 	configFile, err := os.Open("config.json")
@@ -54,14 +52,9 @@ func main() {
 
 	// initializing routes
 	// TODO check verbose mode
-	router := mux.NewRouter()
-	if val, ok := os.LookupEnv("VERBOSE"); ok && (val == "true") {
-		router.Use(verboseMiddleware)
-		log.Println("Started in verbose mode")
-	}
-	router.HandleFunc("/", checkLive).Methods(http.MethodGet)
-	handlers.Init(router, db)
-
+	
+	router := handlers.Init(db)
+	defer handlers.Close()
 	// http server
 	srv := &http.Server{
 		Addr:    "0.0.0.0:8080",
@@ -84,21 +77,4 @@ func main() {
 
 }
 
-func checkLive(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("LIVE!!!"))
-}
 
-func verboseMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		url := r.RequestURI
-		method := r.Method
-		body, err := ioutil.ReadAll(r.Body)
-		if err != nil {
-			log.Printf("Error reading body: %v", err)
-			return
-		}
-		r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
-		log.Printf("RequestURI: %s\n Method: %s\n Body: %s\n", url, method, body)
-		next.ServeHTTP(w, r)
-	})
-}

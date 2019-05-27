@@ -1,9 +1,9 @@
 package handlers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -11,10 +11,22 @@ import (
 	"github.com/mishuk-sk/Go-Bank-Transactions/workers"
 )
 
-var db *sqlx.DB
+type Closable interface {
+	Close()
+}
 
-func Init(router *mux.Router, database *sqlx.DB) {
+var db *sqlx.DB
+var toClose []Closable
+
+func Init(database *sqlx.DB) *mux.Router {
+
 	db = database
+
+	router := mux.NewRouter()
+	if val, ok := os.LookupEnv("VERBOSE"); ok && (val == "true") {
+		router.Use(verboseMiddleware)
+		log.Println("Started in verbose mode")
+	}
 	usersRouter := router.PathPrefix("/users").Subrouter()
 	usersRouter.HandleFunc("/", ListUsers).Methods(http.MethodGet)
 	usersRouter.HandleFunc("/", CreateUser).Methods(http.MethodPost)
@@ -37,54 +49,18 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	transactionsRouter.Use(checkAccountMiddleware)
 	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
 	channel := new(workers.WorkersChan)
+	toClose = append(toClose, channel)
 	channel.Init()
 	channel.AddListener(notifyUser)
 	transactionsRouter.HandleFunc("/", channel.AddHttpWorker(AddTransaction)).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/enrich/", channel.AddHttpWorker(EnrichAccount)).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/debit/", channel.AddHttpWorker(DebitAccount)).Methods(http.MethodPost)
 	transactionsRouter.HandleFunc("/{transaction_id}/", channel.AddHttpWorker(DiscardTransaction)).Methods(http.MethodDelete)
+	return router
 }
 
-func checkUserMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := fetchUser(mux.Vars(r)["user_id"]); err != nil {
-			raiseErr(fmt.Errorf("%s; Internal error - %s", "User not found", err.Error()), w, http.StatusNotFound)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func checkAccountMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if _, err := fetchAccount(mux.Vars(r)["account_id"]); err != nil {
-			raiseErr(fmt.Errorf("%s; Internal error - %s", "Account not found", err.Error()), w, http.StatusNotFound)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
-func raiseErr(err error, w http.ResponseWriter, status int) {
-	w.WriteHeader(status)
-	fmt.Fprintf(w, "%s", err.Error())
-	log.Println(err)
-}
-
-func notifyUser(not interface{}) {
-	notification := not.(Notification)
-	user, _ := fetchUser(notification.Account.UserID.String())
-	var chargeStr string
-	if notification.Debit {
-		chargeStr = "charged"
-	} else if !notification.Debit {
-		chargeStr = "enriched"
-	}
-	notString := fmt.Sprintf("Dear %s %s, your account %s (id: %v) was %s for %f", user.FirstName, user.SecondName, notification.Account.Name, notification.Account.ID, chargeStr, notification.Transaction.Money)
-	if user.Phone != nil {
-		log.Printf("SMS: %s\n", notString)
-	}
-	if user.Email != nil {
-		log.Printf("Email: %s\n", notString)
+func Close() {
+	for _, v := range toClose {
+		v.Close()
 	}
 }
