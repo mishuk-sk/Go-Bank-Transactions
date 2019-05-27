@@ -3,7 +3,6 @@ package handlers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 
@@ -159,7 +158,9 @@ func DebitAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{})
 	json.NewEncoder(w).Encode(transaction)
 }
 
-func DiscardTransaction(w http.ResponseWriter, r *http.Request) {
+func DiscardTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
+	// Defining new struct for transaction because of incorrect parsing with regular Transaction type
+	// (Exactly UUIDs are parsed as bytes and need to be converted after parsing)
 	var transaction struct {
 		ID          uuid.UUID `json:"id" db:"id"`
 		Date        time.Time `json:"date" db:"date"`
@@ -192,25 +193,22 @@ func DiscardTransaction(w http.ResponseWriter, r *http.Request) {
 		raiseErr(fmt.Errorf("%s, ERROR:%s", "Can't delete transaction", err.Error()), w, http.StatusInternalServerError)
 		return
 	}
+	tr := Transaction{transaction.ID, transaction.Date, transaction.FromAccount, RequestTransaction{transaction.ToAccount, transaction.Money}}
+	if transaction.FromAccount != uuid.Nil {
+		from_account, err := fetchAccount(transaction.FromAccount.String())
+		if err != nil {
+			raiseErr(fmt.Errorf("Can't fetch account %v to notify user", transaction.FromAccount), w, http.StatusInternalServerError)
+		}
+		ch <- Notification{from_account, tr, false}
+	}
+	if transaction.ToAccount != uuid.Nil {
+		to_account, err := fetchAccount(transaction.ToAccount.String())
+		if err != nil {
+			raiseErr(fmt.Errorf("Can't fetch account %v to notify user", transaction.ToAccount), w, http.StatusInternalServerError)
+		}
+		ch <- Notification{to_account, tr, true}
+	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(transaction)
-}
-
-func notifyUser(not interface{}) {
-	notification := not.(Notification)
-	user, _ := fetchUser(notification.Account.UserID.String())
-	var chargeStr string
-	if notification.Debit {
-		chargeStr = "charged"
-	} else if !notification.Debit {
-		chargeStr = "enriched"
-	}
-	notString := fmt.Sprintf("Dear %s %s, your account %s (id: %v) was %s for %f", user.FirstName, user.SecondName, notification.Account.Name, notification.Account.ID, chargeStr, notification.Transaction.Money)
-	if user.Phone != nil {
-		log.Printf("SMS: %s\n", notString)
-	}
-	if user.Email != nil {
-		log.Printf("Email: %s\n", notString)
-	}
 }

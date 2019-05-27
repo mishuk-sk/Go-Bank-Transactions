@@ -34,15 +34,14 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	transactionsRouter := accountsRouter.PathPrefix("/{account_id}/transactions").Subrouter()
 	transactionsRouter.Use(checkAccountMiddleware)
 	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
-	// TODO add notify on discarding transaction
-	transactionsRouter.HandleFunc("/{transaction_id}/", DiscardTransaction).Methods(http.MethodDelete)
-	moneyOperationsRouter := transactionsRouter.PathPrefix("").Subrouter()
 	channel := new(subhandler.WorkersChan)
 	channel.Init()
 	channel.AddListener(notifyUser)
-	moneyOperationsRouter.HandleFunc("/", channel.AddWorker(AddTransaction)).Methods(http.MethodPost)
-	moneyOperationsRouter.HandleFunc("/enrich/", channel.AddWorker(EnrichAccount)).Methods(http.MethodPost)
-	moneyOperationsRouter.HandleFunc("/debit/", channel.AddWorker(DebitAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/", channel.AddWorker(AddTransaction)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/enrich/", channel.AddWorker(EnrichAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/debit/", channel.AddWorker(DebitAccount)).Methods(http.MethodPost)
+	// TODO add notify on discarding transaction
+	transactionsRouter.HandleFunc("/{transaction_id}/", channel.AddWorker(DiscardTransaction)).Methods(http.MethodDelete)
 }
 
 func checkUserMiddleware(next http.Handler) http.Handler {
@@ -69,4 +68,22 @@ func raiseErr(err error, w http.ResponseWriter, status int) {
 	w.WriteHeader(status)
 	fmt.Fprintf(w, "%s", err.Error())
 	log.Println(err)
+}
+
+func notifyUser(not interface{}) {
+	notification := not.(Notification)
+	user, _ := fetchUser(notification.Account.UserID.String())
+	var chargeStr string
+	if notification.Debit {
+		chargeStr = "charged"
+	} else if !notification.Debit {
+		chargeStr = "enriched"
+	}
+	notString := fmt.Sprintf("Dear %s %s, your account %s (id: %v) was %s for %f", user.FirstName, user.SecondName, notification.Account.Name, notification.Account.ID, chargeStr, notification.Transaction.Money)
+	if user.Phone != nil {
+		log.Printf("SMS: %s\n", notString)
+	}
+	if user.Email != nil {
+		log.Printf("Email: %s\n", notString)
+	}
 }
