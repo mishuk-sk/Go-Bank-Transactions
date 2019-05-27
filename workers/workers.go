@@ -7,10 +7,8 @@ import (
 
 type WorkersChan struct {
 	source    chan interface{}
-	listeners struct {
-		listeners []func(interface{})
-		sync.RWMutex
-	}
+	listeners []func(interface{})
+	sync.RWMutex
 	quit chan struct{}
 }
 
@@ -27,23 +25,28 @@ func (workCh *WorkersChan) CreateWorker(f func(chan<- interface{}, ...interface{
 }
 
 // FIXME multiply listeners!!! https://stackoverflow.com/questions/28527038/go-one-channel-with-multiple-listeners
-func (workCh *WorkersChan) AddListener(l func(interface{})) {
-	go func() {
-		for {
-			select {
-			case msg := <-workCh.source:
-				l(msg)
-			case <-workCh.quit:
-				return
-			}
-		}
-	}()
+func (workCh *WorkersChan) AddListener(f func(interface{})) {
+	workCh.Lock()
+	workCh.listeners = append(workCh.listeners, f)
+	workCh.Unlock()
 }
 
 func (workCh *WorkersChan) Init() {
 	// FIXME what about channel being too full???
 	workCh.source = make(chan interface{}, 10)
 	workCh.quit = make(chan struct{})
+	go func() {
+		for {
+			select {
+			case msg := <-workCh.source:
+				for _, f := range workCh.listeners {
+					f(msg)
+				}
+			case <-workCh.quit:
+				return
+			}
+		}
+	}()
 }
 
 func (workCh *WorkersChan) Close() {
