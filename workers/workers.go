@@ -2,16 +2,27 @@ package workers
 
 import (
 	"net/http"
+	"sync"
 )
 
 type WorkersChan struct {
-	source chan interface{}
-	quit   chan struct{}
+	source    chan interface{}
+	listeners struct {
+		listeners []func(interface{})
+		sync.RWMutex
+	}
+	quit chan struct{}
 }
 
-func (workCh *WorkersChan) AddHttpWorker(h func(http.ResponseWriter, *http.Request, chan<- interface{})) func(http.ResponseWriter, *http.Request) {
+func (workCh *WorkersChan) CreateHttpWorker(h func(http.ResponseWriter, *http.Request, chan<- interface{})) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		h(w, r, chan<- interface{}(workCh.source))
+	}
+}
+
+func (workCh *WorkersChan) CreateWorker(f func(chan<- interface{}, ...interface{})) func(...interface{}) {
+	return func(v ...interface{}) {
+		f(chan<- interface{}(workCh.source), v...)
 	}
 }
 

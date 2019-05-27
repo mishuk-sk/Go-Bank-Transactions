@@ -54,10 +54,10 @@ func Init(database *sqlx.DB) *mux.Router {
 	toClose = append(toClose, channel)
 	channel.Init()
 	channel.AddListener(notifyUser)
-	transactionsRouter.HandleFunc("/", channel.AddHttpWorker(AddTransaction)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/enrich/", channel.AddHttpWorker(EnrichAccount)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/debit/", channel.AddHttpWorker(DebitAccount)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/{transaction_id}/", channel.AddHttpWorker(DiscardTransaction)).Methods(http.MethodDelete)
+	transactionsRouter.HandleFunc("/", channel.CreateHttpWorker(AddTransaction)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/enrich/", channel.CreateHttpWorker(EnrichAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/debit/", channel.CreateHttpWorker(DebitAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/{transaction_id}/", channel.CreateHttpWorker(DiscardTransaction)).Methods(http.MethodDelete)
 	return router
 }
 
