@@ -52,6 +52,9 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(account)
 }
 
+// Delete method for accounts was depreciated because of unclear logic under transactions behavior
+// after account disappearing
+
 /*func DeleteAccount(w http.ResponseWriter, r *http.Request) {
 	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {

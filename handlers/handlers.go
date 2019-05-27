@@ -15,6 +15,7 @@ type Closable interface {
 	Close()
 }
 
+// FIXME smth went wrong with logic (global variables are widely used, probably should implement "class-like" structure)
 var db *sqlx.DB
 var toClose []Closable
 
@@ -48,6 +49,7 @@ func Init(database *sqlx.DB) *mux.Router {
 	transactionsRouter := accountsRouter.PathPrefix("/{account_id}/transactions").Subrouter()
 	transactionsRouter.Use(checkAccountMiddleware)
 	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
+	// this part implements way to notify listeners on workers pushing to chan
 	channel := new(workers.WorkersChan)
 	toClose = append(toClose, channel)
 	channel.Init()
