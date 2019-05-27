@@ -8,18 +8,18 @@ import (
 	"testing"
 )
 
-type testHttpHandler struct {
+type testHTTPHandler struct {
 	w http.ResponseWriter
 	r *http.Request
 }
 
-func (h testHttpHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (h testHTTPHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(r.Body)
 	w.Write(body)
 	return
 }
 func TestVerboseFunc(t *testing.T) {
-	loggingFunc := verboseMiddleware(testHttpHandler{})
+	loggingFunc := verboseMiddleware(testHTTPHandler{})
 	switch loggingFunc.(type) {
 	case http.HandlerFunc:
 		break

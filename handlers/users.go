@@ -20,7 +20,7 @@ type RequestUser struct {
 	Email      interface{} `json:"email" db:"email"`
 }
 
-func ListUsers(w http.ResponseWriter, r *http.Request) {
+func listUsers(w http.ResponseWriter, r *http.Request) {
 	var users []User
 	err := db.Select(&users, "SELECT * FROM users")
 	if err != nil {
@@ -32,7 +32,7 @@ func ListUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(users)
 }
 
-func CreateUser(w http.ResponseWriter, r *http.Request) {
+func createUser(w http.ResponseWriter, r *http.Request) {
 
 	user := User{}
 	user.ID = uuid.New()
@@ -49,7 +49,7 @@ func CreateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func UpdateUser(w http.ResponseWriter, r *http.Request) {
+func updateUser(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
@@ -70,7 +70,7 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func DeleteUser(w http.ResponseWriter, r *http.Request) {
+func deleteUser(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
@@ -85,7 +85,7 @@ func DeleteUser(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func GetUser(w http.ResponseWriter, r *http.Request) {
+func getUser(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)

@@ -16,7 +16,7 @@ type Account struct {
 	Balance float64     `json:"balance" db:"balance"`
 }
 
-func GetAccount(w http.ResponseWriter, r *http.Request) {
+func getAccount(w http.ResponseWriter, r *http.Request) {
 	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
@@ -27,7 +27,7 @@ func GetAccount(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(account)
 }
 
-func UpdateAccount(w http.ResponseWriter, r *http.Request) {
+func updateAccount(w http.ResponseWriter, r *http.Request) {
 	account, err := fetchAccount(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
@@ -43,7 +43,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 	account.Balance = reqAccount.Balance
 	account.Name = reqAccount.Name
-	if err := updateAccount(account); err != nil {
+	if err := updateAcc(account); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
@@ -81,7 +81,7 @@ func UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(account)
 }*/
-func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
+func getUserAccounts(w http.ResponseWriter, r *http.Request) {
 	var accounts []Account
 	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
@@ -97,7 +97,7 @@ func GetUserAccounts(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(accounts)
 }
 
-func AddAccount(w http.ResponseWriter, r *http.Request) {
+func addAccount(w http.ResponseWriter, r *http.Request) {
 	user, err := fetchUser(mux.Vars(r)["user_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusNotFound)
@@ -128,7 +128,7 @@ func fetchAccount(id string) (Account, error) {
 	return account, nil
 }
 
-func updateAccount(data Account) error {
+func updateAcc(data Account) error {
 	_, err := db.Exec("UPDATE personal_accounts SET balance = $1 name = $2 WHERE id=$2", data.Balance, data.Name, data.ID)
 	return err
 }

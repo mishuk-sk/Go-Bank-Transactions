@@ -28,7 +28,7 @@ type Notification struct {
 	Debit       bool
 }
 
-func GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
+func getAccountTransactions(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(mux.Vars(r)["account_id"])
 	if err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
@@ -51,7 +51,7 @@ func GetAccountTransactions(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(transactions)
 }
 
-func AddTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
+func addTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
 	fromAccount, _ := fetchAccount(mux.Vars(r)["account_id"])
 	reqTransaction := RequestTransaction{}
 	if err := json.NewDecoder(r.Body).Decode(&reqTransaction); err != nil {
@@ -90,7 +90,7 @@ func AddTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{
 	json.NewEncoder(w).Encode(transaction)
 }
 
-func EnrichAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
+func enrichAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
 	req := RequestTransaction{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
@@ -122,7 +122,7 @@ func EnrichAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}
 	json.NewEncoder(w).Encode(transaction)
 }
 
-func DebitAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
+func debitAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
 	req := RequestTransaction{}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		raiseErr(err, w, http.StatusBadRequest)
@@ -158,7 +158,7 @@ func DebitAccount(w http.ResponseWriter, r *http.Request, ch chan<- interface{})
 	json.NewEncoder(w).Encode(transaction)
 }
 
-func DiscardTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
+func discardTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interface{}) {
 	// Defining new struct for transaction because of incorrect parsing with regular Transaction type
 	// (Exactly UUIDs are parsed as bytes and need to be converted after parsing)
 	var transaction struct {
@@ -195,18 +195,18 @@ func DiscardTransaction(w http.ResponseWriter, r *http.Request, ch chan<- interf
 	}
 	tr := Transaction{transaction.ID, transaction.Date, transaction.FromAccount, RequestTransaction{transaction.ToAccount, transaction.Money}}
 	if transaction.FromAccount != uuid.Nil {
-		from_account, err := fetchAccount(transaction.FromAccount.String())
+		fromAccount, err := fetchAccount(transaction.FromAccount.String())
 		if err != nil {
 			raiseErr(fmt.Errorf("Can't fetch account %v to notify user", transaction.FromAccount), w, http.StatusInternalServerError)
 		}
-		ch <- Notification{from_account, tr, false}
+		ch <- Notification{fromAccount, tr, false}
 	}
 	if transaction.ToAccount != uuid.Nil {
-		to_account, err := fetchAccount(transaction.ToAccount.String())
+		toAccount, err := fetchAccount(transaction.ToAccount.String())
 		if err != nil {
 			raiseErr(fmt.Errorf("Can't fetch account %v to notify user", transaction.ToAccount), w, http.StatusInternalServerError)
 		}
-		ch <- Notification{to_account, tr, true}
+		ch <- Notification{toAccount, tr, true}
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
