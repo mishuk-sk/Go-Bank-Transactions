@@ -5,11 +5,10 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/mishuk-sk/Go-Bank-Transactions/subhandler"
-
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
+	"github.com/mishuk-sk/Go-Bank-Transactions/workers"
 )
 
 var db *sqlx.DB
@@ -37,13 +36,13 @@ func Init(router *mux.Router, database *sqlx.DB) {
 	transactionsRouter := accountsRouter.PathPrefix("/{account_id}/transactions").Subrouter()
 	transactionsRouter.Use(checkAccountMiddleware)
 	transactionsRouter.HandleFunc("/", GetAccountTransactions).Methods(http.MethodGet)
-	channel := new(subhandler.WorkersChan)
+	channel := new(workers.WorkersChan)
 	channel.Init()
 	channel.AddListener(notifyUser)
-	transactionsRouter.HandleFunc("/", channel.AddWorker(AddTransaction)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/enrich/", channel.AddWorker(EnrichAccount)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/debit/", channel.AddWorker(DebitAccount)).Methods(http.MethodPost)
-	transactionsRouter.HandleFunc("/{transaction_id}/", channel.AddWorker(DiscardTransaction)).Methods(http.MethodDelete)
+	transactionsRouter.HandleFunc("/", channel.AddHttpWorker(AddTransaction)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/enrich/", channel.AddHttpWorker(EnrichAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/debit/", channel.AddHttpWorker(DebitAccount)).Methods(http.MethodPost)
+	transactionsRouter.HandleFunc("/{transaction_id}/", channel.AddHttpWorker(DiscardTransaction)).Methods(http.MethodDelete)
 }
 
 func checkUserMiddleware(next http.Handler) http.Handler {
