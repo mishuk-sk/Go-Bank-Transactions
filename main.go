@@ -32,17 +32,17 @@ func main() {
 
 	configFile, err := os.Open("config.json")
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	err = json.NewDecoder(configFile).Decode(&config)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	psqlInfo := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable",
 		config.DbHost, config.DbPort, config.DbUser, config.DbPassword, config.DbName)
 	db, err := sqlx.Open("postgres", psqlInfo)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer db.Close()
 	// test db connection
