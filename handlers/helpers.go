@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -47,7 +48,11 @@ func checkAccountMiddleware(next http.Handler) http.Handler {
 
 func raiseErr(err error, w http.ResponseWriter, status int) {
 	w.WriteHeader(status)
-	fmt.Fprintf(w, "%s", err.Error())
+	w.Header().Set("Content-Type", "application/json")
+	jsonError := struct {
+		Error string
+	}{err.Error()}
+	json.NewEncoder(w).Encode(jsonError)
 	log.Println(err)
 }
 

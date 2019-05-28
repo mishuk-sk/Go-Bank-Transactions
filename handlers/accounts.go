@@ -116,6 +116,6 @@ func addAccount(w http.ResponseWriter, r *http.Request) {
 }
 
 func updateAcc(data Account) error {
-	_, err := db.Exec("UPDATE personal_accounts SET balance = $1 name = $2 WHERE id=$2", data.Balance, data.Name, data.ID)
+	_, err := db.Exec("UPDATE personal_accounts SET balance = $1, name = $2 WHERE id=$3", data.Balance, data.Name, data.ID)
 	return err
 }
