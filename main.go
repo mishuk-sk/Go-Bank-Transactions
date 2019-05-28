@@ -1,7 +1,6 @@
 package main
 
 import (
-
 	"context"
 	"encoding/json"
 	"fmt"
@@ -52,7 +51,7 @@ func main() {
 
 	// initializing routes
 	// TODO check verbose mode
-	
+
 	router := handlers.Init(db)
 	defer handlers.Close()
 	// http server
@@ -76,5 +75,3 @@ func main() {
 	os.Exit(0)
 
 }
-
-
