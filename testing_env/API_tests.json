@@ -1,0 +1,953 @@
+{
+	"info": {
+		"_postman_id": "6891b44c-2cac-400c-840c-d2ffc56442f4",
+		"name": "Tests for bank transactions",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Post user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "680983d8-fb5d-46cb-87ca-d132abbef114",
+						"exec": [
+							"pm.test(\"response is ok\", function() {",
+							"    pm.expect(pm.response.code).to.be.oneOf([201, 200])",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"first_name\": \"Someone\",\n\t\"second_name\": \"Somewhat\",\n\t\"phone\": \"+375447868049\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Post second user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ac5166e5-4463-40c5-9124-79e270b846ce",
+						"exec": [
+							"pm.test(\"response is ok\", function() {",
+							"    pm.expect(pm.response.code).to.be.oneOf([201, 200])",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"first_name\": \"Someone\",\n\t\"second_name\": \"Else\",\n\t\"phone\": \"+375447868049\",\n\t\"email\": \"mishuk.sk@gmail.com\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get all users",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "24ef1b8c-74ee-43b1-b58b-759e4b4950d7",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "b66346ec-991f-4e6d-a61e-553719b6bed4",
+						"exec": [
+							"var jsonData = JSON.parse(responseBody);",
+							"pm.test(\"Expected 2 or more users\", function(){",
+							"    pm.expect(jsonData.length).to.be.at.least(2);",
+							"});",
+							"pm.environment.set(\"user_ids\", jsonData.map(v=>v.id));",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{host}}/users/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get users by id",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "9d724f80-e512-4f67-91d2-cb4967601633",
+						"exec": [
+							"if (!pm.environment.has(\"user_id_index\")){",
+							"    pm.environment.set(\"user_id_index\", 0);",
+							"}",
+							"var userIdIndex = pm.environment.get(\"user_id_index\");",
+							"var userIds = pm.environment.get(\"user_ids\");",
+							"if (userIdIndex<userIds.length){",
+							"    pm.environment.set(\"testing_user_id\", userIds[userIdIndex]);",
+							"    pm.environment.set(\"user_id_index\", userIdIndex+1);",
+							"    postman.setNextRequest(\"get users by id\");",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "9c159e93-f4e8-4931-88ad-5e106180fda3",
+						"exec": [
+							"pm.test(\"Test get user with id \" + pm.environment.get(\"testing_user_id\"), function(){",
+							"    pm.response.to.be.ok;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get random user accounts",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "eb4661f1-8b57-4852-896b-9eb1e95c881e",
+						"exec": [
+							"pm.test(\"Expectiong to user get array as a result\", function(){",
+							"   pm.expect(typeof(JSON.parse(responseBody))).to.equal(typeof([])) ",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "d6b36b3c-85f3-4610-8446-2338fd3c8fb5",
+						"exec": [
+							"userIds = pm.environment.get(\"user_ids\");",
+							"pm.environment.set(\"testing_user_id\", userIds[Math.floor(Math.random()*userIds.length)]);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "2f652f85-d1f1-40bf-b32b-a7c76a4ed683",
+						"exec": [
+							"pm.test(\"Expecting to be ok\", function(){",
+							"   pm.response.to.be.ok;",
+							"});",
+							"",
+							"pm.test(\"Expecting first_name to be 'someone'\", function(){",
+							"   pm.expect(JSON.parse(responseBody).first_name).to.equal(\"person\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"first_name\": \"person\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post user account",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "25c651f7-039c-4f0b-923b-a8f07349465c",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "07cfd11c-7e8d-4b4e-9a8c-be0072e5d969",
+						"exec": [
+							"body=JSON.parse(responseBody);",
+							"",
+							"",
+							"pm.environment.set(\"added_account_id\", body.id);",
+							"",
+							"",
+							"pm.test(\"Expectiong to be ok\", function(){",
+							"   pm.response.to.be.ok;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"none\",\n\t\"balance\": 1000\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get added account",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "25c651f7-039c-4f0b-923b-a8f07349465c",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "07cfd11c-7e8d-4b4e-9a8c-be0072e5d969",
+						"exec": [
+							"pm.test(\"Expectiong to be ok\", function(){",
+							"   pm.response.to.be.ok;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Update added account",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "03eeada0-904c-45a6-8af6-08b7234e7566",
+						"exec": [
+							"pm.test(\"Expecting to be ok\", function(){",
+							"   pm.response.to.be.ok;",
+							"});",
+							"body=JSON.parse(responseBody);",
+							"pm.test(\"Expecting name to be changed and balance remain the same\", function(){",
+							"    pm.expect(body.name).to.equal(\"important\");",
+							"    pm.expect(body.balance).to.equal(pm.environment.get(\"initial_balance\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "b41f4471-5b80-4314-92dd-b88af556057f",
+						"exec": [
+							"",
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        consi=ole.log(err);",
+							"    } else {",
+							"        pm.environment.set(\"initial_balance\", resp.json().balance);",
+							"    }",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\": \"important\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "post second user account",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "25c651f7-039c-4f0b-923b-a8f07349465c",
+						"exec": [
+							"userIds = pm.environment.get(\"user_ids\");",
+							"pm.environment.set(\"testing_user_id2\", userIds[Math.floor(Math.random()*userIds.length)]);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "07cfd11c-7e8d-4b4e-9a8c-be0072e5d969",
+						"exec": [
+							"body=JSON.parse(responseBody);",
+							"",
+							"",
+							"pm.environment.set(\"added_account_id2\", body.id);",
+							"",
+							"",
+							"pm.test(\"Expectiong to be ok\", function(){",
+							"   pm.response.to.be.ok;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"name\":\"none\",\n\t\"money\": 1000\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id2}}/accounts/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id2}}",
+						"accounts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "0796a1e5-8f1a-41dd-8566-5b0c680003d8",
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "b94a595f-ace3-46b4-a773-113e1ee33557",
+						"exec": [
+							"var body = JSON.parse(responseBody);",
+							"",
+							"",
+							"pm.environment.set(\"transaction_id\", body.id);",
+							"pm.test(\"testing status to be ok\", function(){",
+							"   pm.response.to.be.ok; ",
+							"});",
+							"",
+							"pm.test(\"testing transaction fields\", function(){",
+							"   pm.expect(body.money).to.equal(50);",
+							"   pm.expect(body.from_account).to.equal(pm.environment.get(\"added_account_id\"));",
+							"   pm.expect(body.to_account).to.equal(pm.environment.get(\"added_account_id2\"));",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"to_account\": \"{{added_account_id2}}\",\n\t\"money\": 50\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/transactions/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						"transactions",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "debit account",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c095e944-3da2-4cba-be5d-f6ac25926bc0",
+						"exec": [
+							"",
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        consi=ole.log(err);",
+							"    } else {",
+							"        pm.environment.set(\"initial_balance\", resp.json().balance);",
+							"    }",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "c3431e82-a803-407d-ac65-2096a3029545",
+						"exec": [
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        console.log(err);",
+							"    } else {",
+							"        pm.test(\"Test balance correct handling\", function(){",
+							"            pm.expect(pm.environment.get(\"initial_balance\")-resp.json().balance).to.equal(JSON.parse(responseBody).money);",
+							"        });",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"money\": 10,\n\t\"to_account\": \"12ewrew\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/transactions/debit/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						"transactions",
+						"debit",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "enrich account",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c095e944-3da2-4cba-be5d-f6ac25926bc0",
+						"exec": [
+							"",
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        consi=ole.log(err);",
+							"    } else {",
+							"        pm.environment.set(\"initial_balance\", resp.json().balance);",
+							"    }",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "c3431e82-a803-407d-ac65-2096a3029545",
+						"exec": [
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        console.log(err);",
+							"    } else {",
+							"        pm.test(\"Test balance correct handling\", function(){",
+							"            pm.expect(Math.abs(pm.environment.get(\"initial_balance\")-resp.json().balance)).to.equal(JSON.parse(responseBody).money);",
+							"        });",
+							"    }",
+							"});",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"name": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"money\": 10,\n\t\"from_account\": \"12ewrew\"\n}"
+				},
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/transactions/enrich/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						"transactions",
+						"enrich",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "discard transaction",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"id": "c6f5cdb1-2446-4f48-b489-0835d669739e",
+						"exec": [
+							"",
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        consi=ole.log(err);",
+							"    } else {",
+							"        pm.environment.set(\"initial_balance\", resp.json().balance);",
+							"    }",
+							"});",
+							"",
+							"",
+							"const req2 = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id2\")+\"/accounts/\"+pm.environment.get(\"added_account_id2\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req2, (err, resp)=>{",
+							"    if (err){",
+							"        consi=ole.log(err);",
+							"    } else {",
+							"        pm.environment.set(\"initial_balance2\", resp.json().balance);",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"id": "29b16c59-29c6-4eb1-95e0-47616f1d6287",
+						"exec": [
+							"",
+							"const req = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id\")+\"/accounts/\"+pm.environment.get(\"added_account_id\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req, (err, resp)=>{",
+							"    if (err){",
+							"        console.log(err);",
+							"    } else {",
+							"        pm.test(\"Test balance correct handling\", function(){",
+							"            pm.expect(resp.json().balance-pm.environment.get(\"initial_balance\")).to.equal(JSON.parse(responseBody).money);",
+							"        });",
+							"    }",
+							"});",
+							"",
+							"",
+							"const req2 = {",
+							"    url: pm.globals.get(\"host\")+\"/users/\"+pm.environment.get(\"testing_user_id2\")+\"/accounts/\"+pm.environment.get(\"added_account_id2\")+\"/\",",
+							"    method: 'GET',",
+							"    header: 'headername1:value1'",
+							"};",
+							"pm.sendRequest(req2, (err, resp)=>{",
+							"    if (err){",
+							"        console.log(err);",
+							"    } else {",
+							"        pm.test(\"Test balance correct handling\", function(){",
+							"            pm.expect(pm.environment.get(\"initial_balance2\")-resp.json().balance).to.equal(JSON.parse(responseBody).money);",
+							"        });",
+							"    }",
+							"});",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/transactions/{{transaction_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						"transactions",
+						"{{transaction_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "delete user, that has accounts",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "887e7966-c347-45a9-ad48-5c18d38a5036",
+						"exec": [
+							"pm.test(\"Expecting to be ok\", function(){",
+							"   pm.response.to.be.ok;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get account of deleted user",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "0401339b-d50d-41fb-8fdf-0f73f11f9db2",
+						"exec": [
+							"pm.test(\"Expecting to have ok status\", function(){",
+							"    pm.response.to.be.ok;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{host}}/users/{{testing_user_id}}/accounts/{{added_account_id}}/",
+					"host": [
+						"{{host}}"
+					],
+					"path": [
+						"users",
+						"{{testing_user_id}}",
+						"accounts",
+						"{{added_account_id}}",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

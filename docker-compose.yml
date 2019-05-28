@@ -15,6 +15,18 @@ services:
       POSTGRES_PASSWORD: password
     ports:
       - "8090:5432"
+  newman:
+    build: ./testing_env/.
+    image: postman_checks
+    volumes:
+      - /home/mishuk/go/src/github.com/mishuk-sk/Go-Bank-Transactions/testing_env:/etc/newman
+    command: 
+      run -g /etc/newman/newman_globals.json /etc/newman/API_tests.json
+      --reporters cli,html
+      --reporter-html-export Test_output.html
+      --reporter-html-template /etc/newman/template.hbs
+    depends_on:
+      - app
   app:
     build: .
     command: ["./wait-for-it.sh", "db:5432", "--", "go", "run", "main.go"]
