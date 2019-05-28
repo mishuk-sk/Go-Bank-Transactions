@@ -9,8 +9,11 @@ import (
 )
 
 type Account struct {
-	ID      uuid.UUID   `json:"id" db:"id"`
-	UserID  uuid.UUID   `json:"user_id" db:"user_id"`
+	ID     uuid.UUID `json:"id" db:"id"`
+	UserID uuid.UUID `json:"user_id" db:"user_id"`
+	RequestAccount
+}
+type RequestAccount struct {
 	Name    interface{} `json:"name" db:"name"`
 	Balance float64     `json:"balance" db:"balance"`
 }
@@ -32,16 +35,12 @@ func updateAccount(w http.ResponseWriter, r *http.Request) {
 		raiseErr(err, w, http.StatusNotFound)
 		return
 	}
-	var reqAccount struct {
-		Balance float64 `json:"balance"`
-		Name    string  `json:"name"`
-	}
+	reqAccount := account.RequestAccount
 	if err := json.NewDecoder(r.Body).Decode(&reqAccount); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return
 	}
-	account.Balance = reqAccount.Balance
-	account.Name = reqAccount.Name
+	account.RequestAccount = reqAccount
 	if err := updateAcc(account); err != nil {
 		raiseErr(err, w, http.StatusInternalServerError)
 		return

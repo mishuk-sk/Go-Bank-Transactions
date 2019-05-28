@@ -12,3 +12,5 @@
 *.out
 #custom
 .vscode
+
+./testing_env/*.html

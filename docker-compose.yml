@@ -8,7 +8,8 @@ services:
     ports:
       - "80:80"
   db:
-    image: postgres
+    build: ./db_dumps/.
+    image: postgres-clear
     environment:
       POSTGRES_DB: db
       POSTGRES_USER: postgres-dev
@@ -18,8 +19,9 @@ services:
   newman:
     build: ./testing_env/.
     image: postman_checks
+    container_name: newman
     volumes:
-      - /home/mishuk/go/src/github.com/mishuk-sk/Go-Bank-Transactions/testing_env:/etc/newman
+      - ${PWD}/testing_env:/etc/newman
     command: 
       run -g /etc/newman/newman_globals.json /etc/newman/API_tests.json
       --reporters cli,html

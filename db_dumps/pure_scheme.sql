@@ -15,15 +15,15 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE ONLY public.transactions DROP CONSTRAINT "transactions_toBook_fkey";
-ALTER TABLE ONLY public.transactions DROP CONSTRAINT "transactions_fromBook_fkey";
-ALTER TABLE ONLY public.personal_accounts DROP CONSTRAINT "bankBooks_userId_fkey";
-ALTER TABLE ONLY public.users DROP CONSTRAINT users_pkey;
-ALTER TABLE ONLY public.transactions DROP CONSTRAINT transactions_pkey;
-ALTER TABLE ONLY public.personal_accounts DROP CONSTRAINT "none";
-DROP TABLE public.users;
-DROP TABLE public.transactions;
-DROP TABLE public.personal_accounts;
+--ALTER TABLE ONLY public.transactions DROP CONSTRAINT "transactions_toBook_fkey";
+--ALTER TABLE ONLY public.transactions DROP CONSTRAINT "transactions_fromBook_fkey";
+--ALTER TABLE ONLY public.personal_accounts DROP CONSTRAINT "bankBooks_userId_fkey";
+--ALTER TABLE ONLY public.users DROP CONSTRAINT users_pkey;
+--ALTER TABLE ONLY public.transactions DROP CONSTRAINT transactions_pkey;
+--ALTER TABLE ONLY public.personal_accounts DROP CONSTRAINT "none";
+--DROP TABLE public.users;
+--DROP TABLE public.transactions;
+--DROP TABLE public.personal_accounts;
 SET default_tablespace = '';
 
 SET default_with_oids = false;
@@ -48,8 +48,8 @@ ALTER TABLE public.personal_accounts OWNER TO "postgres-dev";
 
 CREATE TABLE public.transactions (
     id uuid NOT NULL,
-    from_account uuid NOT NULL,
-    to_account uuid NOT NULL,
+    from_account uuid,
+    to_account uuid,
     date date NOT NULL,
     money money NOT NULL
 );
@@ -77,44 +77,7 @@ CREATE TABLE public.users (
 
 ALTER TABLE public.users OWNER TO "postgres-dev";
 
---
--- Data for Name: personal_accounts; Type: TABLE DATA; Schema: public; Owner: postgres-dev
---
 
-COPY public.personal_accounts (id, balance, user_id, name) FROM stdin;
-a144d7b4-69d3-4c37-b400-4584548cd78c	$0.00	86ebaad9-c2ff-4740-a53c-91736146a869	\N
-a25a9644-e740-4cf0-ade9-a2c0448d383c	$0.00	86ebaad9-c2ff-4740-a53c-91736146a869	\N
-0daa575a-2385-44f0-bc50-c62b8e0c5f0e	$0.00	86ebaad9-c2ff-4740-a53c-91736146a869	\N
-a6d3e736-bdac-45a3-a0b5-56e1dee1b6d3	$12,345.00	86ebaad9-c2ff-4740-a53c-91736146a869	\N
-456def90-dcdf-4efa-8762-19de0b07cb54	$509.90	86ebaad9-c2ff-4740-a53c-91736146a869	\N
-\.
-
-
---
--- Data for Name: transactions; Type: TABLE DATA; Schema: public; Owner: postgres-dev
---
-
-COPY public.transactions (id, from_account, to_account, date, money) FROM stdin;
-\.
-
-
---
--- Data for Name: users; Type: TABLE DATA; Schema: public; Owner: postgres-dev
---
-
-COPY public.users (first_name, id, phone, second_name, email) FROM stdin;
-Mikhail	45729667-08e2-4ce2-aad9-fe5540820cf1	234555	Skuratovich	\N
-Mikhail	0aa445cc-62aa-47af-bc41-c835f42d400a	234555	Skuratovich	\N
-lol	54831cee-95d8-401e-be92-19695c1b6e4e	234555	lol	\N
-lol	9cde7f19-54cd-4ee7-8cc2-3b4d0186490e	234555	lol	\N
-lol	2080dc41-6f8c-43f5-a09f-e2903938ac68	234555	lol	\N
-lol	de0ffa3b-9b60-4515-b9c6-35b8d253abfc	234555	lol	\N
-lol	1f71f0d6-078f-4e70-8b27-f45bd85e6fe7	234555	lol	\N
-l	a7a566de-e53c-4981-8e38-2abcdd19eea8	234555	lol	\N
-l	9ccd9d9b-5ecc-4fa8-86b8-721b35b8baf1	234555	lol	mishuk
-l	8ce42428-069f-4a8b-a8f7-c2d7d97fe767	234555	lol	mishuk
-Someone	86ebaad9-c2ff-4740-a53c-91736146a869	234555	Skuratovich	THIS ONE IS TEST
-\.
 
 
 --
