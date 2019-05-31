@@ -80,12 +80,12 @@ func TestFetchAccount(t *testing.T) {
 	db = sqlx.NewDb(mockDB, "postgres")
 	defer db.Close()
 	id := uuid.New()
-	account := Account{id, uuid.New(), "", 50}
+	account := Account{id, uuid.New(), RequestAccount{"", 50}}
 	rows := sqlmock.NewRows([]string{"id", "user_id", "name", "balance"}).
 		AddRow(account.ID, account.UserID, account.Name, account.Balance).
 		AddRow(account.ID, account.UserID, account.Name, account.Balance)
-	secondId:= uuid.New()
-	mock.ExpectQuery(`SELECT [[:ascii:]]* FROM personal_accounts WHERE id=`).WithArgs(id).WillReturnRows(rows)	
+	secondId := uuid.New()
+	mock.ExpectQuery(`SELECT [[:ascii:]]* FROM personal_accounts WHERE id=`).WithArgs(id).WillReturnRows(rows)
 	fetched, err := fetchAccount(id.String())
 	if err != nil {
 		t.Errorf("Can't get account data with correct id (%v). ERROR: %s", id, err)

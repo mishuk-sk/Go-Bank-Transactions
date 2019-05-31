@@ -40,7 +40,6 @@ func Init(database *sqlx.DB) *mux.Router {
 	validateUserRouter.HandleFunc("/", getUserAccounts).Methods(http.MethodGet)
 	validateUserRouter.HandleFunc("/", addAccount).Methods(http.MethodPost)
 
-	
 	// Delete method for accounts was depreciated because of unclear logic under transactions behavior
 	// after account disappearing
 	//accountsRouter.HandleFunc("/{account_id}/", DeleteAccount).Methods(http.MethodDelete)
