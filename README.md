@@ -4,5 +4,5 @@ Actually, application runs in docker, so that there're several bash scripts prov
 Also, after running tests, newman outputs results into `testing_env/Test_output.html`, that presents test result in readable for human form.
 By the way, there are several questions on package organization, testing environment, etc.
 Testing looks REALLY messy. Like this, always restarting:
-(https://github.com/mishuk-sk/Go-Bank-Transactions/blob/66fefbd04bed6ecc39f1d548d160272ba72abce6/start-dev.sh#L1-L5)
+https://github.com/mishuk-sk/Go-Bank-Transactions/blob/66fefbd04bed6ecc39f1d548d160272ba72abce6/start-dev.sh#L1-L5
 So that question appears. May be you can suggest any approach to do it more readable and using less resources?
