@@ -109,7 +109,7 @@ ALTER TABLE ONLY public.users
 --
 
 ALTER TABLE ONLY public.personal_accounts
-    ADD CONSTRAINT "bankBooks_userId_fkey" FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE NOT VALID;
+    ADD CONSTRAINT "bankBooks_userId_fkey" FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE NONE;
 
 
 --

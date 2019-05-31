@@ -35,20 +35,24 @@ func Init(database *sqlx.DB) *mux.Router {
 	usersRouter.HandleFunc("/{user_id}/", deleteUser).Methods(http.MethodDelete)
 	usersRouter.HandleFunc("/{user_id}/", getUser).Methods(http.MethodGet)
 
-	accountsRouter := usersRouter.PathPrefix("/{user_id}/accounts").Subrouter()
-	accountsRouter.Use(checkUserMiddleware)
-	accountsRouter.HandleFunc("/", getUserAccounts).Methods(http.MethodGet)
-	accountsRouter.HandleFunc("/", addAccount).Methods(http.MethodPost)
-	accountsRouter.HandleFunc("/{account_id}/", getAccount).Methods(http.MethodGet)
+	validateUserRouter := usersRouter.PathPrefix("/{user_id}/accounts").Subrouter()
+	validateUserRouter.Use(checkUserMiddleware)
+	validateUserRouter.HandleFunc("/", getUserAccounts).Methods(http.MethodGet)
+	validateUserRouter.HandleFunc("/", addAccount).Methods(http.MethodPost)
+
+	
 	// Delete method for accounts was depreciated because of unclear logic under transactions behavior
 	// after account disappearing
-
 	//accountsRouter.HandleFunc("/{account_id}/", DeleteAccount).Methods(http.MethodDelete)
+
+	//not validating user account and trnsaction operations
+	accountsRouter := usersRouter.PathPrefix("/{user_id}/accounts").Subrouter()
+	accountsRouter.HandleFunc("/{account_id}/", getAccount).Methods(http.MethodGet)
 	accountsRouter.HandleFunc("/{account_id}/", updateAccount).Methods(http.MethodPut)
+	accountsRouter.HandleFunc("/{account_id}/transactions/", getAccountTransactions).Methods(http.MethodGet)
 
 	transactionsRouter := accountsRouter.PathPrefix("/{account_id}/transactions").Subrouter()
 	transactionsRouter.Use(checkAccountMiddleware)
-	transactionsRouter.HandleFunc("/", getAccountTransactions).Methods(http.MethodGet)
 	// this part implements way to notify listeners on workers pushing to chan
 	channel := new(workers.Observer)
 	toClose = append(toClose, channel)
